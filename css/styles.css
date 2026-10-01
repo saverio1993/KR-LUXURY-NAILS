@@ -132,7 +132,7 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 
 /* ---------- Navegación de categorías ---------- */
 .cat-nav {
-  position: sticky; top: 0; z-index: 20;
+  position: sticky; top: 52px; z-index: 20;
   background: rgba(251, 246, 242, 0.88);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
@@ -143,14 +143,14 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
   scrollbar-width: none;
 }
 .cat-nav ul::-webkit-scrollbar { display: none; }
-.cat-nav a {
+.cat-nav button {
   display: block; white-space: nowrap;
   padding: 7px 16px; border-radius: 999px;
   text-decoration: none; font-size: 17px; color: var(--mauve);
   border: 1px solid var(--line); background: #fff;
   transition: all .2s;
 }
-.cat-nav a.active { background: var(--wine); color: #fff; border-color: var(--wine); }
+.cat-nav button.active { background: var(--wine); color: #fff; border-color: var(--wine); }
 
 /* ---------- Secciones ---------- */
 .section { padding: 40px 20px 8px; }
@@ -171,7 +171,7 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 }
 
 /* ---------- Catálogo ---------- */
-.category { padding-top: 34px; scroll-margin-top: 64px; }
+.category { padding-top: 34px; scroll-margin-top: 118px; }
 .category h3 {
   font-family: var(--script); font-style: normal; font-weight: 400;
   font-size: 40px; color: var(--mauve); text-align: center; line-height: 1.1;
@@ -260,3 +260,49 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 
 .loading { padding: 120px 20px; text-align: center; color: var(--muted); }
 .loading .script { font-size: 44px; color: var(--wine); display: block; }
+
+/* ---------- Sobre mí: foto de la estilista ---------- */
+.about-photo {
+  width: 210px; aspect-ratio: 4 / 5;
+  margin: 22px auto 0;
+  border-radius: 999px 999px 26px 26px;   /* forma de arco */
+  padding: 5px;
+  background: var(--gold);
+  box-shadow: var(--shadow);
+}
+.about-photo img, .about-photo-empty {
+  width: 100%; height: 100%;
+  border-radius: 999px 999px 22px 22px;
+  object-fit: cover; display: block;
+  background: var(--blush);
+}
+.about-photo-empty {
+  display: grid; place-items: center;
+  font-family: var(--script); font-style: normal; font-size: 64px; color: var(--rose);
+  background: linear-gradient(160deg, #f8ebe6, #ecd3c9);
+}
+.stylist-name {
+  text-align: center; margin-top: 12px;
+  font-family: var(--script); font-style: normal; font-size: 36px; color: var(--mauve); line-height: 1.1;
+}
+#sobre-mi .about-card { margin-top: 18px; }
+
+/* ---------- Inicio: vista previa del catálogo ---------- */
+.teaser { display: block; margin-top: 18px; text-decoration: none; text-align: center; }
+.teaser-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+.teaser-grid img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 16px; box-shadow: 0 8px 20px -12px rgba(78, 35, 48, 0.45); }
+.teaser .btn { width: 100%; }
+
+/* ---------- Pantalla de catálogo ---------- */
+.catalog-top {
+  position: sticky; top: 0; z-index: 25;
+  height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 14px;
+  background: var(--wine); color: #f3d9cf;
+}
+.catalog-title { font-family: var(--script); font-style: normal; font-size: 32px; line-height: 1; }
+.back-home, .back-home-spacer { width: 84px; }
+.back-home { color: #f3d9cf; text-decoration: none; font-size: 18px; }
+.catalog-page { padding-top: 18px; }
+.catalog-page .category:first-of-type { padding-top: 12px; }

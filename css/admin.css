@@ -108,3 +108,18 @@ input:focus, textarea:focus, select:focus { border-color: var(--rose); box-shado
 .clerk-box .cl-card { box-shadow: var(--shadow); border: 1px solid var(--line); }
 .login .error .btn { margin-top: 12px; }
 .help-note { font-size: 15px; color: var(--muted); margin-top: 10px; }
+
+/* ---------- Foto de la estilista ---------- */
+.profile-photo { display: flex; gap: 16px; align-items: center; margin: 4px 0 18px; }
+.profile-photo-frame {
+  flex: none; width: 92px; aspect-ratio: 4 / 5; padding: 3px;
+  border-radius: 999px 999px 16px 16px; background: var(--gold);
+}
+.profile-photo-frame img, .profile-photo-frame span {
+  width: 100%; height: 100%; display: grid; place-items: center; object-fit: cover;
+  border-radius: 999px 999px 13px 13px; background: var(--blush); color: var(--muted); font-size: 14px;
+}
+.profile-photo-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.profile-photo-actions .btn { padding: 8px 18px; font-size: 16px; }
+.hint-title { font-size: 15px; color: var(--muted); }
+.link-danger { color: #b3384f; font-size: 15px; padding: 0; }

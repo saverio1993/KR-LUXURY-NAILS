@@ -17,6 +17,7 @@
   let data = null;          // catálogo en edición
   const pending = {};       // id de foto → { base64, preview } aún sin subir
   const deletedUrls = new Set(); // fotos subidas a Blob que se quitaron del catálogo
+  let profilePhotoPending = null; // foto de la estilista elegida y aún sin subir
   let dirty = false;
   let sortables = [];
   let entered = false;
@@ -393,6 +394,19 @@
     $("#profileForm").innerHTML = `
       <fieldset>
         <legend>Tu marca</legend>
+        <div class="profile-photo">
+          <div class="profile-photo-frame">
+            ${profilePhotoPending || p.photo
+              ? `<img src="${esc(profilePhotoPending ? profilePhotoPending.preview : p.photo)}" alt="">`
+              : '<span>Sin foto</span>'}
+          </div>
+          <div class="profile-photo-actions">
+            <span class="hint-title">Tu foto para "Sobre mí"</span>
+            <button type="button" class="btn btn-ghost" id="pickProfilePhoto">${p.photo || profilePhotoPending ? "Cambiar foto" : "Subir foto"}</button>
+            ${p.photo || profilePhotoPending ? '<button type="button" class="link-danger" id="removeProfilePhoto">Quitar foto</button>' : ""}
+          </div>
+        </div>
+        ${field("stylistName", "Tu nombre (opcional)", 'placeholder="Ej. Kimberlin"', "Se muestra debajo de tu foto")}
         ${field("name", "Nombre del negocio")}
         ${field("tagline", "Frase de bienvenida")}
         <label>Sobre mí<textarea name="about">${esc(p.about)}</textarea></label>
@@ -456,6 +470,28 @@
       renderProfile();
       setDirty();
     }
+    if (e.target.id === "pickProfilePhoto") $("#profileFileInput").click();
+    if (e.target.id === "removeProfilePhoto") {
+      if (/^https:\/\//.test(p.photo || "")) deletedUrls.add(p.photo);
+      p.photo = "";
+      profilePhotoPending = null;
+      renderProfile();
+      setDirty();
+    }
+  });
+
+  $("#profileFileInput").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      profilePhotoPending = await compress(file);
+      renderProfile();
+      setDirty();
+      toast("Foto lista. No olvides Guardar.");
+    } catch (_) {
+      toast("No se pudo leer la imagen.");
+    }
   });
 
   /* ---------------- guardar ---------------- */
@@ -475,13 +511,23 @@
         delete pending[id];
       }
 
-      // 2. Guardar el catálogo (y borrar las fotos que se quitaron)
+      // 2. Foto de la estilista
+      if (profilePhotoPending) {
+        btn.textContent = "Subiendo tu foto…";
+        const { url } = await api("/api/upload", { method: "POST", body: JSON.stringify({ name: uid("perfil-"), base64: profilePhotoPending.base64 }) });
+        if (/^https:\/\//.test(data.profile.photo || "")) deletedUrls.add(data.profile.photo);
+        data.profile.photo = url;
+        profilePhotoPending = null;
+      }
+
+      // 3. Guardar el catálogo (y borrar las fotos que se quitaron)
       btn.textContent = "Guardando…";
       await api("/api/catalog", { method: "POST", body: JSON.stringify({ catalog: data, deleted: [...deletedUrls] }) });
       deletedUrls.clear();
 
       setDirty(false);
       renderCatalog();
+      renderProfile();
       toast("¡Guardado! Ya está en la web ✨", 4000);
     } catch (err) {
       console.error(err);

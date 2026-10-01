@@ -50,6 +50,7 @@ module.exports = async (req, res) => {
 
   // Solo se borran fotos subidas a Blob que ya no aparecen en el catálogo.
   const inUse = new Set(catalog.categories.flatMap((c) => c.items.map((it) => it.src)));
+  if (catalog.profile.photo) inUse.add(catalog.profile.photo);
   const toDelete = (Array.isArray(deleted) ? deleted : []).filter((u) => {
     try { return BLOB_HOST.test(new URL(u).hostname) && !inUse.has(u); } catch (_) { return false; }
   });

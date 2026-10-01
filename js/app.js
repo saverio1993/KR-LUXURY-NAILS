@@ -24,36 +24,36 @@
     return "https://wa.me/" + num + (p.whatsappMessage ? "?text=" + encodeURIComponent(p.whatsappMessage) : "");
   }
 
-  function render(data) {
+  let DATA = null;
+  let homeScroll = 0;
+
+  const isCatalog = () => location.hash.replace("#", "").startsWith("catalogo");
+
+  function photoFigure(it, catName) {
+    return `
+        <figure class="photo" data-id="${esc(it.id)}">
+          <img src="${esc(it.src)}" alt="${esc(it.title || catName)}" loading="lazy">
+          ${it.title || it.price ? `<figcaption class="cap">${it.price ? `<b>${esc(it.price)}</b>` : ""}${esc(it.title)}</figcaption>` : ""}
+        </figure>`;
+  }
+
+  // Inicio: información de la estilista (sin el catálogo completo)
+  function renderHome(data) {
     const p = data.profile || {};
     const cats = data.categories || [];
     const wa = waLink(p);
     const ig = p.instagram ? "https://instagram.com/" + String(p.instagram).replace(/^@/, "") : "";
     const mapQ = encodeURIComponent(p.mapsQuery || p.address || "");
-
-    const nav = cats.map((c) => `<li><a href="#${esc(c.id)}">${esc(c.name)}</a></li>`).join("");
-
-    const catalog = cats.map((c) => {
-      const items = (c.items || []).map((it) => `
-        <figure class="photo" data-id="${esc(it.id)}">
-          <img src="${esc(it.src)}" alt="${esc(it.title || c.name)}" loading="lazy">
-          ${it.title || it.price ? `<figcaption class="cap">${it.price ? `<b>${esc(it.price)}</b>` : ""}${esc(it.title)}</figcaption>` : ""}
-        </figure>`).join("");
-      return `
-        <div class="category reveal" id="${esc(c.id)}">
-          <h3>${esc(c.name)}</h3>
-          ${c.description ? `<p class="desc">${esc(c.description)}</p>` : ""}
-          <div class="gallery">${items || '<div class="empty-cat">Muy pronto nuevos diseños ✨</div>'}</div>
-        </div>`;
-    }).join("");
+    const total = cats.reduce((n, c) => n + (c.items || []).length, 0);
+    // Una foto de cada categoría para la vista previa
+    const preview = cats.map((c) => (c.items || [])[0]).filter(Boolean).slice(0, 3);
 
     const services = (p.services || []).map((s) => `
       <div class="service"><span class="name">${esc(s.name)}</span><span class="dots"></span><span class="price">${esc(s.price)}</span></div>`).join("");
 
     const hours = (p.hours || []).map(esc).join("<br>");
 
-    document.title = p.name || "KR Luxury Nails";
-    document.getElementById("app").innerHTML = `
+    return `
       <header class="hero">
         <div class="monogram"><span>${esc(initials(p.name))}</span></div>
         <h1>${esc(p.name)}</h1>
@@ -64,19 +64,25 @@
         </div>
       </header>
 
-      ${cats.length ? `<nav class="cat-nav"><ul>${nav}</ul></nav>` : ""}
-
-      ${p.about ? `
       <section class="section reveal" id="sobre-mi">
         <h2 class="section-title">Sobre mí</h2>
-        <div class="about-card">${esc(p.about)}</div>
-      </section>` : ""}
-
-      <section class="section" id="catalogo">
-        <h2 class="section-title reveal">Catálogo</h2>
-        <p class="section-sub reveal">Toca una foto para verla en grande</p>
-        ${catalog}
+        <div class="about-photo">
+          ${p.photo
+            ? `<img src="${esc(p.photo)}" alt="${esc(p.stylistName || p.name)}">`
+            : `<span class="about-photo-empty">${esc(initials(p.name))}</span>`}
+        </div>
+        ${p.stylistName ? `<p class="stylist-name">${esc(p.stylistName)}</p>` : ""}
+        ${p.about ? `<div class="about-card">${esc(p.about)}</div>` : ""}
       </section>
+
+      ${preview.length ? `
+      <section class="section reveal" id="disenos">
+        <h2 class="section-title">Mis diseños</h2>
+        <a class="teaser" href="#catalogo" aria-label="Ver catálogo completo">
+          <div class="teaser-grid">${preview.map((it) => `<img src="${esc(it.src)}" alt="" loading="lazy">`).join("")}</div>
+          <span class="btn btn-primary">Ver catálogo completo${total ? ` · ${total} fotos` : ""}</span>
+        </a>
+      </section>` : ""}
 
       ${services ? `
       <section class="section reveal" id="servicios">
@@ -106,18 +112,78 @@
         </div>
       </section>
 
+      ${footer(p)}
+      ${wa ? `<a class="fab" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp">${ICONS.whatsapp}</a>` : ""}
+    `;
+  }
+
+  // Catálogo: pantalla aparte con todas las fotos y los botones de categorías
+  function renderCatalog(data) {
+    const p = data.profile || {};
+    const cats = data.categories || [];
+    const wa = waLink(p);
+
+    const nav = cats.map((c) => `<li><button type="button" data-target="${esc(c.id)}">${esc(c.name)}</button></li>`).join("");
+    const catalog = cats.map((c) => `
+        <div class="category" id="${esc(c.id)}">
+          <h3>${esc(c.name)}</h3>
+          ${c.description ? `<p class="desc">${esc(c.description)}</p>` : ""}
+          <div class="gallery">${(c.items || []).map((it) => photoFigure(it, c.name)).join("") || '<div class="empty-cat">Muy pronto nuevos diseños ✨</div>'}</div>
+        </div>`).join("");
+
+    return `
+      <div class="catalog-top">
+        <a class="back-home" href="#" aria-label="Volver al inicio">‹ Inicio</a>
+        <span class="catalog-title">Catálogo</span>
+        <span class="back-home-spacer"></span>
+      </div>
+      ${cats.length ? `<nav class="cat-nav"><ul>${nav}</ul></nav>` : ""}
+      <section class="section catalog-page">
+        <p class="section-sub">Toca una foto para verla en grande</p>
+        ${catalog}
+      </section>
+      ${footer(p)}
+      ${wa ? `<a class="fab" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp">${ICONS.whatsapp}</a>` : ""}
+    `;
+  }
+
+  function footer(p) {
+    return `
       <footer class="footer">
         <span class="script">${esc(p.name)}</span>
         © ${new Date().getFullYear()} · Hecho con amor
         <br><a class="admin-link" href="admin.html">✦ Administrar</a>
-      </footer>
+      </footer>`;
+  }
 
-      ${wa ? `<a class="fab" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp">${ICONS.whatsapp}</a>` : ""}
-    `;
-
+  function route() {
+    if (!DATA) return;
+    const p = DATA.profile || {};
+    const catalog = isCatalog();
+    document.title = (catalog ? "Catálogo · " : "") + (p.name || "KR Luxury Nails");
+    document.getElementById("app").innerHTML = catalog ? renderCatalog(DATA) : renderHome(DATA);
     setupReveal();
-    setupNavSpy();
-    setupLightbox(cats);
+    if (catalog) {
+      window.scrollTo(0, 0);
+      setupCategoryButtons();
+      setupNavSpy();
+      setupLightbox(DATA.categories || []);
+    } else {
+      window.scrollTo(0, homeScroll);
+    }
+  }
+
+  window.addEventListener("hashchange", route);
+  // Recordar dónde estaba en el inicio para volver al mismo lugar
+  window.addEventListener("scroll", () => { if (!isCatalog()) homeScroll = window.scrollY; }, { passive: true });
+
+  function setupCategoryButtons() {
+    document.querySelectorAll(".cat-nav button").forEach((b) => {
+      b.addEventListener("click", () => {
+        const el = document.getElementById(b.dataset.target);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
   }
 
   function setupReveal() {
@@ -130,9 +196,9 @@
   }
 
   function setupNavSpy() {
-    const links = [...document.querySelectorAll(".cat-nav a")];
+    const links = [...document.querySelectorAll(".cat-nav button")];
     if (!links.length || !("IntersectionObserver" in window)) return;
-    const byId = Object.fromEntries(links.map((a) => [a.getAttribute("href").slice(1), a]));
+    const byId = Object.fromEntries(links.map((a) => [a.dataset.target, a]));
     const io = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
         if (!e.isIntersecting) return;
@@ -148,45 +214,49 @@
     document.querySelectorAll(".category").forEach((c) => io.observe(c));
   }
 
+  const lightbox = { all: [], idx: 0, ready: false };
+
   function setupLightbox(cats) {
-    const all = [];
-    cats.forEach((c) => (c.items || []).forEach((it) => all.push({ ...it, cat: c.name })));
     const lb = document.getElementById("lightbox");
     const img = document.getElementById("lbImg");
     const cap = document.getElementById("lbCap");
     const count = document.getElementById("lbCount");
-    let idx = 0;
+    lightbox.all = [];
+    cats.forEach((c) => (c.items || []).forEach((it) => lightbox.all.push({ ...it, cat: c.name })));
 
     function show(i) {
-      idx = (i + all.length) % all.length;
-      const it = all[idx];
+      const all = lightbox.all;
+      lightbox.idx = (i + all.length) % all.length;
+      const it = all[lightbox.idx];
       img.src = it.src;
       img.alt = it.title || it.cat;
       cap.innerHTML = `${it.price ? `<b>${esc(it.price)}</b>` : ""}${esc(it.title || it.cat)}`;
-      count.textContent = `${idx + 1} / ${all.length}`;
+      count.textContent = `${lightbox.idx + 1} / ${all.length}`;
     }
     function open(i) { show(i); lb.classList.add("open"); lb.setAttribute("aria-hidden", "false"); document.body.style.overflow = "hidden"; }
     function close() { lb.classList.remove("open"); lb.setAttribute("aria-hidden", "true"); document.body.style.overflow = ""; }
 
     document.querySelectorAll(".photo").forEach((el) => {
-      el.addEventListener("click", () => open(all.findIndex((x) => x.id === el.dataset.id)));
+      el.addEventListener("click", () => open(lightbox.all.findIndex((x) => x.id === el.dataset.id)));
     });
+    if (lightbox.ready) return;
+    lightbox.ready = true;
     document.getElementById("lbClose").onclick = close;
-    document.getElementById("lbPrev").onclick = (e) => { e.stopPropagation(); show(idx - 1); };
-    document.getElementById("lbNext").onclick = (e) => { e.stopPropagation(); show(idx + 1); };
+    document.getElementById("lbPrev").onclick = (e) => { e.stopPropagation(); show(lightbox.idx - 1); };
+    document.getElementById("lbNext").onclick = (e) => { e.stopPropagation(); show(lightbox.idx + 1); };
     lb.onclick = (e) => { if (e.target === lb) close(); };
     document.addEventListener("keydown", (e) => {
       if (!lb.classList.contains("open")) return;
       if (e.key === "Escape") close();
-      if (e.key === "ArrowLeft") show(idx - 1);
-      if (e.key === "ArrowRight") show(idx + 1);
+      if (e.key === "ArrowLeft") show(lightbox.idx - 1);
+      if (e.key === "ArrowRight") show(lightbox.idx + 1);
     });
     let x0 = null;
     lb.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; }, { passive: true });
     lb.addEventListener("touchend", (e) => {
       if (x0 == null) return;
       const dx = e.changedTouches[0].clientX - x0;
-      if (Math.abs(dx) > 50) show(idx + (dx < 0 ? 1 : -1));
+      if (Math.abs(dx) > 50) show(lightbox.idx + (dx < 0 ? 1 : -1));
       x0 = null;
     });
   }
@@ -196,7 +266,7 @@
   const getJson = (url) => fetch(url).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
   getJson("/api/catalog")
     .catch(() => getJson(window.KR_CONFIG.catalogPath + "?v=" + Date.now()))
-    .then(render)
+    .then((data) => { DATA = data; route(); })
     .catch(() => {
       document.getElementById("app").innerHTML = '<div class="loading"><span class="script">Ups…</span>No se pudo cargar el catálogo.</div>';
     });
