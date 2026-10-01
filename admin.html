@@ -21,11 +21,9 @@
       <div class="monogram"><span>KR</span></div>
       <h1 class="script">Bienvenida</h1>
       <p class="muted">Inicia sesión para administrar tu catálogo</p>
-      <div class="login-card google-card">
-        <div id="googleBtn"></div>
-        <p class="error" id="loginError"></p>
-        <p class="help-note">Solo las cuentas autorizadas pueden administrar la web.</p>
-      </div>
+      <div id="clerkSignIn" class="clerk-box"></div>
+      <p class="error" id="loginError"></p>
+      <p class="help-note">Solo las cuentas autorizadas pueden administrar la web.</p>
       <a class="back" href="./">← Volver a la web</a>
     </section>
 
@@ -67,7 +65,6 @@
   <input type="file" id="fileInput" accept="image/*" multiple hidden>
   <div class="toast" id="toast"></div>
 
-  <script src="https://accounts.google.com/gsi/client" async></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
   <script src="js/config.js"></script>
   <script src="js/admin.js"></script>

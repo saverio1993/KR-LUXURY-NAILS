@@ -1,28 +1,25 @@
 /* KR Luxury Nails — panel de administración
  *
- * Los datos viven en el propio repositorio de GitHub:
- *   - data/catalog.json  → información y catálogo
- *   - images/catalog/    → fotos subidas desde el panel
- * Se entra con la cuenta de Google. Las funciones de /api (en Vercel) comprueban
- * que el correo sea de una administradora y guardan en GitHub con un token que
- * vive en Vercel y nunca llega al navegador.
+ * - Inicio de sesión con Clerk (Google o correo). Las funciones de /api en Vercel
+ *   verifican la sesión y que el correo esté en ADMIN_EMAILS.
+ * - El catálogo y las fotos nuevas se guardan en Vercel Blob; los cambios se ven
+ *   en la web al momento.
  */
 (function () {
   "use strict";
 
   const CFG = window.KR_CONFIG;
-  const RAW = `https://raw.githubusercontent.com/${CFG.owner}/${CFG.repo}/${CFG.branch}/`;
 
   const $ = (sel) => document.querySelector(sel);
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const uid = (p) => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
   let data = null;          // catálogo en edición
-  let catalogSha = null;    // versión de data/catalog.json en GitHub
   const pending = {};       // id de foto → { base64, preview } aún sin subir
-  const toDelete = new Set(); // rutas de fotos a borrar del repositorio al guardar
+  const deletedUrls = new Set(); // fotos subidas a Blob que se quitaron del catálogo
   let dirty = false;
   let sortables = [];
+  let entered = false;
 
   /* ---------------- utilidades ---------------- */
   function toast(msg, ms = 2600) {
@@ -40,23 +37,11 @@
     btn.textContent = v ? "Guardar ●" : "Guardar";
   }
 
-  function utf8ToB64(str) {
-    const bytes = new TextEncoder().encode(str);
-    let bin = "";
-    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-    return btoa(bin);
-  }
-  function b64ToUtf8(b64) {
-    const bin = atob(b64.replace(/\s/g, ""));
-    return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
-  }
-
+  // Llama a /api con el token de sesión de Clerk.
   async function api(url, opts = {}) {
-    const res = await fetch(url, {
-      ...opts,
-      credentials: "same-origin",
-      headers: opts.body ? { "Content-Type": "application/json" } : {},
-    });
+    const headers = opts.body ? { "Content-Type": "application/json" } : {};
+    if (window.Clerk && Clerk.session) headers.Authorization = "Bearer " + (await Clerk.session.getToken());
+    const res = await fetch(url, { ...opts, headers });
     if (!res.ok) {
       const err = new Error("API " + res.status);
       err.status = res.status;
@@ -65,8 +50,6 @@
     }
     return res.status === 204 ? null : res.json();
   }
-  // Lee, guarda o borra un archivo del repositorio a través de /api/gh
-  const gh = (path, opts) => api("/api/gh?p=" + encodeURIComponent(path), opts);
 
   function imgSrc(item) {
     return pending[item.id] ? pending[item.id].preview : item.src;
@@ -74,68 +57,86 @@
 
   /* ---------------- sesión ---------------- */
   async function loadCatalog() {
-    const file = await gh(CFG.catalogPath);
-    catalogSha = file.sha;
-    data = JSON.parse(b64ToUtf8(file.content));
+    data = await api("/api/catalog?fresh=" + Date.now());
     data.profile = data.profile || {};
     data.categories = data.categories || [];
   }
 
-  async function enterPanel() {
-    await loadCatalog();
-    showPanel();
+  function loginMessage(html) {
+    $("#loginError").innerHTML = html;
   }
 
-  // Google entrega una credencial firmada; el servidor la verifica y abre la sesión.
-  async function onGoogleCredential(resp) {
-    const err = $("#loginError");
-    err.textContent = "Verificando…";
+  async function enterPanel() {
+    if (entered) return;
+    loginMessage("Verificando…");
     try {
-      await api("/api/login", { method: "POST", body: JSON.stringify({ credential: resp.credential }) });
-      err.textContent = "";
-      await enterPanel();
+      await api("/api/me");
     } catch (ex) {
-      err.textContent = ex.status === 403
-        ? `La cuenta ${(ex.info && ex.info.email) || ""} no tiene permiso para administrar.`
-        : "No se pudo iniciar sesión. Inténtalo de nuevo.";
-      if (window.google) google.accounts.id.disableAutoSelect();
+      if (ex.status === 403) {
+        loginMessage(`La cuenta ${esc((ex.info && ex.info.email) || "")} no tiene permiso para administrar.
+          <br><button class="btn btn-ghost" id="otherAccount" type="button">Usar otra cuenta</button>`);
+        $("#otherAccount").onclick = async () => { await Clerk.signOut(); location.reload(); };
+      } else {
+        loginMessage(ex.info && ex.info.error ? esc(ex.info.error) : "No se pudo verificar la sesión. Inténtalo de nuevo.");
+      }
+      return;
     }
+    entered = true;
+    loginMessage("");
+    await loadCatalog();
+    showPanel();
   }
 
   async function logout() {
     if (dirty && !confirm("Tienes cambios sin guardar. ¿Salir de todas formas?")) return;
     dirty = false;
-    try { await api("/api/logout", { method: "POST" }); } catch (_) {}
-    if (window.google) google.accounts.id.disableAutoSelect();
+    try { await Clerk.signOut(); } catch (_) {}
     location.reload();
   }
 
-  function waitForGoogle() {
+  function loadClerk(cfg) {
     return new Promise((resolve, reject) => {
-      let n = 0;
-      (function check() {
-        if (window.google && google.accounts && google.accounts.id) return resolve();
-        if (++n > 100) return reject(new Error("Google no cargó"));
-        setTimeout(check, 100);
-      })();
+      const s = document.createElement("script");
+      s.async = true;
+      s.crossOrigin = "anonymous";
+      s.dataset.clerkPublishableKey = cfg.clerkPublishableKey;
+      s.src = `https://${cfg.clerkFrontendApi}/npm/@clerk/clerk-js@5/dist/clerk.browser.js`;
+      s.onload = async () => {
+        try { await window.Clerk.load({ localization: CLERK_ES }); resolve(); } catch (e) { reject(e); }
+      };
+      s.onerror = () => reject(new Error("Clerk no cargó"));
+      document.head.appendChild(s);
     });
   }
 
-  async function showLogin() {
+  // Textos del recuadro de Clerk en español
+  const CLERK_ES = {
+    signIn: {
+      start: { title: "Iniciar sesión", subtitle: "para administrar {{applicationName}}", actionText: "¿No tienes cuenta?", actionLink: "Regístrate" },
+      password: { title: "Escribe tu contraseña", actionLink: "Usar otro método" },
+    },
+    socialButtonsBlockButton: "Continuar con {{provider|titleize}}",
+    dividerText: "o",
+    formFieldLabel__emailAddress: "Correo electrónico",
+    formFieldLabel__password: "Contraseña",
+    formFieldInputPlaceholder__emailAddress: "Escribe tu correo",
+    formButtonPrimary: "Continuar",
+    footerActionLink__useAnotherMethod: "Usar otro método",
+  };
+
+  function showLogin() {
     $("#panelView").hidden = true;
     $("#loginView").hidden = false;
-    const err = $("#loginError");
-    try {
-      const { googleClientId } = await api("/api/config");
-      if (!googleClientId) { err.textContent = "Falta configurar el acceso con Google (GOOGLE_CLIENT_ID)."; return; }
-      await waitForGoogle();
-      google.accounts.id.initialize({ client_id: googleClientId, callback: onGoogleCredential, auto_select: true });
-      google.accounts.id.renderButton($("#googleBtn"), {
-        theme: "outline", size: "large", shape: "pill", text: "signin_with", locale: "es", width: 280,
-      });
-    } catch (_) {
-      err.textContent = "No se pudo cargar el inicio de sesión. Revisa tu conexión.";
-    }
+    Clerk.mountSignIn($("#clerkSignIn"), {
+      routing: "virtual",
+      fallbackRedirectUrl: location.href,
+      signUpFallbackRedirectUrl: location.href,
+      appearance: {
+        variables: { colorPrimary: "#6e3446", borderRadius: "14px", fontFamily: "Cormorant Garamond, Georgia, serif", fontSize: "17px" },
+      },
+    });
+    // Cuando termina el inicio de sesión (sin recargar), entramos al panel.
+    Clerk.addListener(({ user }) => { if (user && !entered) enterPanel(); });
   }
 
   function showPanel() {
@@ -163,21 +164,13 @@
         <div class="thumbs" data-cat="${esc(c.id)}">
           ${c.items.map((it) => `
             <div class="thumb" data-id="${esc(it.id)}">
-              <img src="${esc(imgSrc(it))}" alt="" data-fallback="${esc(it.src)}">
+              <img src="${esc(imgSrc(it))}" alt="">
               ${pending[it.id] ? '<span class="badge">nueva</span>' : ""}
               ${it.title ? `<span class="t">${esc(it.title)}</span>` : ""}
             </div>`).join("")}
           <button class="add-tile" data-add="${esc(c.id)}"><span>＋</span>Fotos</button>
         </div>
       </article>`).join("") || '<p class="tip">Aún no hay categorías. Crea la primera ✨</p>';
-
-    // Si la foto aún no está publicada en la web, se muestra desde GitHub directamente.
-    wrap.querySelectorAll("img[data-fallback]").forEach((img) => {
-      img.onerror = () => {
-        const f = img.dataset.fallback;
-        if (f && !/^(https?:|data:|blob:)/.test(f) && img.src !== RAW + f) img.src = RAW + f;
-      };
-    });
 
     // Arrastrar categorías
     sortables.push(new Sortable(wrap, {
@@ -240,7 +233,7 @@
     if (!f) return;
     f.cat.items.splice(f.index, 1);
     if (pending[id]) delete pending[id];
-    else if (f.item.src && f.item.src.startsWith(CFG.imagesDir + "/")) toDelete.add(f.item.src);
+    else if (/^https:\/\//.test(f.item.src)) deletedUrls.add(f.item.src);
   }
 
   /* ---------------- hoja inferior ---------------- */
@@ -314,7 +307,6 @@
       </form>`, (root) => {
       const form = root.querySelector("#photoForm");
       const img = root.querySelector(".preview img");
-      img.onerror = () => { if (!/^(https?:|data:|blob:)/.test(it.src)) img.src = RAW + it.src; };
       form.onsubmit = (e) => {
         e.preventDefault();
         it.title = form.title.value.trim();
@@ -467,13 +459,6 @@
   });
 
   /* ---------------- guardar ---------------- */
-  async function putFile(path, base64, message, sha) {
-    return gh(path, {
-      method: "PUT",
-      body: JSON.stringify({ message, content: base64, ...(sha ? { sha } : {}) }),
-    });
-  }
-
   async function save() {
     const btn = $("#saveBtn");
     btn.disabled = true;
@@ -485,46 +470,24 @@
       for (let i = 0; i < uploads.length; i++) {
         const id = uploads[i];
         btn.textContent = `Subiendo ${i + 1}/${uploads.length}…`;
-        const item = findItem(id).item;
-        await putFile(item.src, pending[id].base64, "Nueva foto en el catálogo");
+        const { url } = await api("/api/upload", { method: "POST", body: JSON.stringify({ name: id, base64: pending[id].base64 }) });
+        findItem(id).item.src = url;
         delete pending[id];
       }
 
-      // 2. Borrar del repositorio las fotos eliminadas
-      for (const path of [...toDelete]) {
-        btn.textContent = "Limpiando…";
-        try {
-          const f = await gh(path);
-          await gh(path, {
-            method: "DELETE",
-            body: JSON.stringify({ message: "Eliminar foto del catálogo", sha: f.sha }),
-          });
-        } catch (err) {
-          if (err.status !== 404) throw err;
-        }
-        toDelete.delete(path);
-      }
-
-      // 3. Guardar el catálogo
+      // 2. Guardar el catálogo (y borrar las fotos que se quitaron)
       btn.textContent = "Guardando…";
-      const json = JSON.stringify(data, null, 2) + "\n";
-      try {
-        catalogSha = (await putFile(CFG.catalogPath, utf8ToB64(json), "Actualizar catálogo", catalogSha)).content.sha;
-      } catch (err) {
-        if (err.status !== 409 && err.status !== 422) throw err;
-        // El archivo cambió en otro lugar: tomamos la versión nueva y guardamos encima.
-        const cur = await gh(CFG.catalogPath);
-        catalogSha = (await putFile(CFG.catalogPath, utf8ToB64(json), "Actualizar catálogo", cur.sha)).content.sha;
-      }
+      await api("/api/catalog", { method: "POST", body: JSON.stringify({ catalog: data, deleted: [...deletedUrls] }) });
+      deletedUrls.clear();
 
       setDirty(false);
       renderCatalog();
-      toast("¡Guardado! La web se actualiza en un minuto ✨", 4500);
+      toast("¡Guardado! Ya está en la web ✨", 4000);
     } catch (err) {
       console.error(err);
       btn.disabled = false;
       btn.textContent = "Guardar ●";
-      if (err.status === 401) toast("Tu sesión expiró. Vuelve a iniciar sesión.", 4000);
+      if (err.status === 401 || err.status === 403) toast("Tu sesión expiró. Vuelve a iniciar sesión.", 4000);
       else toast("No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.", 4000);
     }
   }
@@ -558,9 +521,22 @@
   /* ---------------- inicio ---------------- */
   (async function init() {
     try {
-      await api("/api/me");      // ¿ya hay una sesión abierta?
-      await enterPanel();
+      const cfg = await api("/api/config");
+      if (!cfg.clerkPublishableKey) {
+        $("#loginView").hidden = false;
+        loginMessage("Falta conectar Clerk al proyecto en Vercel.");
+        return;
+      }
+      await loadClerk(cfg);
     } catch (_) {
+      $("#loginView").hidden = false;
+      loginMessage("No se pudo cargar el inicio de sesión. Revisa tu conexión.");
+      return;
+    }
+    if (Clerk.user) {
+      $("#loginView").hidden = false;
+      await enterPanel();
+    } else {
       showLogin();
     }
   })();

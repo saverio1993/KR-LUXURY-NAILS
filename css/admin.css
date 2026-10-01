@@ -102,7 +102,9 @@ input:focus, textarea:focus, select:focus { border-color: var(--rose); box-shado
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-/* ---------- Botón de Google ---------- */
-.google-card { text-align: center; }
-#googleBtn { display: flex; justify-content: center; min-height: 44px; }
-.help-note { font-size: 15px; color: var(--muted); margin-top: 6px; }
+/* ---------- Inicio de sesión (Clerk) ---------- */
+.clerk-box { display: flex; justify-content: center; margin-top: 24px; min-height: 60px; }
+.clerk-box .cl-rootBox { width: 100%; max-width: 400px; }
+.clerk-box .cl-card { box-shadow: var(--shadow); border: 1px solid var(--line); }
+.login .error .btn { margin-top: 12px; }
+.help-note { font-size: 15px; color: var(--muted); margin-top: 10px; }

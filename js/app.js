@@ -191,8 +191,11 @@
     });
   }
 
-  fetch(window.KR_CONFIG.catalogPath + "?v=" + Date.now())
-    .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  // En Vercel el catálogo viene de /api/catalog (lo que guarda el panel);
+  // si no está disponible (por ejemplo en GitHub Pages) se usa el archivo del repositorio.
+  const getJson = (url) => fetch(url).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
+  getJson("/api/catalog")
+    .catch(() => getJson(window.KR_CONFIG.catalogPath + "?v=" + Date.now()))
     .then(render)
     .catch(() => {
       document.getElementById("app").innerHTML = '<div class="loading"><span class="script">Ups…</span>No se pudo cargar el catálogo.</div>';

@@ -1,8 +1,6 @@
-const { currentUser } = require("./_lib");
+const { requireAdmin } = require("./_lib");
 
-module.exports = (req, res) => {
-  res.setHeader("Cache-Control", "no-store");
-  const user = currentUser(req);
-  if (!user) return res.status(401).json({ error: "Sin sesión" });
-  res.json({ email: user.email });
+module.exports = async (req, res) => {
+  const admin = await requireAdmin(req, res);
+  if (admin) res.json(admin);
 };

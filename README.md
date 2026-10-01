@@ -10,40 +10,32 @@ Es una web estática (HTML, CSS y JavaScript): no hace falta instalar nada y fun
 
 ## Cómo se guardan los datos
 
-- `data/catalog.json` guarda la información del negocio y el catálogo.
-- `images/catalog/` guarda las fotos que se suben desde el panel. Se reducen a 1600 px en JPG para que carguen rápido.
+- **Vercel Blob** (almacén `kr-luxury-nails-fotos`) guarda `catalog.json` y las fotos que se suben desde el panel.
+  Los cambios se ven en la web al momento.
+- `data/catalog.json` e `images/catalog/` del repositorio son el catálogo inicial: se usan mientras no
+  se haya guardado nada desde el panel.
+- Las fotos se reducen a 1600 px en JPG en el propio teléfono antes de subirlas.
 
-Al pulsar **Guardar**, el panel envía los cambios a las funciones de `api/` en Vercel,
-que los guardan en este repositorio. Vercel vuelve a publicar la web en un minuto.
+## Acceso al panel (Clerk)
 
-## Acceso al panel (cuenta de Google)
-
-La dueña entra con **"Iniciar sesión con Google"**. Solo los correos de `ADMIN_EMAILS` pueden administrar.
-La sesión dura 30 días en ese teléfono.
+La dueña entra con Clerk ("Continuar con Google" o correo). Solo los correos de `ADMIN_EMAILS` pueden administrar.
 
 Variables de entorno en Vercel (Project → Settings → Environment Variables):
 
-| Variable | Valor |
+| Variable | Cómo se obtiene |
 | --- | --- |
-| `GOOGLE_CLIENT_ID` | ID de cliente OAuth de Google (tipo "Aplicación web") |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` | Se crean solas al conectar Clerk desde el Marketplace de Vercel |
+| `BLOB_READ_WRITE_TOKEN` | Se crea sola al conectar el almacén de Blob al proyecto |
 | `ADMIN_EMAILS` | Correos autorizados, separados por comas |
-| `GITHUB_TOKEN` | Fine-grained token con permiso *Contents: Read and write* solo sobre este repositorio |
 
-Cómo crear el `GOOGLE_CLIENT_ID`:
+Funciones (`api/`):
 
-1. Ve a https://console.cloud.google.com/apis/credentials y crea un proyecto si no tienes uno.
-2. Configura la *pantalla de consentimiento de OAuth* (tipo Externo, con el nombre de la web).
-3. *Crear credenciales → ID de cliente de OAuth → Aplicación web*.
-4. En *Orígenes de JavaScript autorizados* agrega `https://kr-luxury-nails.vercel.app`.
-5. Copia el ID de cliente (termina en `.apps.googleusercontent.com`).
+- `GET /api/config`: clave pública de Clerk para el panel.
+- `GET /api/me`: comprueba la sesión y el permiso.
+- `GET /api/catalog`: catálogo publicado (público). `POST /api/catalog`: guarda el catálogo (solo administradoras).
+- `POST /api/upload`: sube una foto a Blob (solo administradoras).
 
-Después de cambiar las variables hay que volver a publicar (Redeploy) en Vercel.
-
-## Configuración
-
-`js/config.js` indica la ruta del catálogo y de las fotos. Las funciones de `api/_lib.js`
-usan el repositorio `saverio1993/KR-LUXURY-NAILS` y la rama publicada; se pueden cambiar con
-`GITHUB_OWNER`, `GITHUB_REPO` y `GITHUB_BRANCH`.
+Después de cambiar variables hay que volver a publicar (Redeploy) en Vercel.
 
 ## GitHub Pages (opcional)
 
