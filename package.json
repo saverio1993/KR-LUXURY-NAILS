@@ -1,0 +1,6 @@
+{
+  "name": "kr-luxury-nails",
+  "private": true,
+  "description": "Catálogo de uñas con panel de administración",
+  "engines": { "node": "24.x" }
+}
