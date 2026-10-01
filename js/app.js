@@ -136,9 +136,13 @@
     const io = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
         if (!e.isIntersecting) return;
-        links.forEach((a) => a.classList.remove("active"));
         const a = byId[e.target.id];
-        if (a) { a.classList.add("active"); a.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" }); }
+        if (!a || a.classList.contains("active")) return;
+        links.forEach((l) => l.classList.remove("active"));
+        a.classList.add("active");
+        // Solo se desplaza la barra de categorías de lado; nunca la página.
+        const ul = a.closest("ul");
+        ul.scrollTo({ left: a.offsetLeft - (ul.clientWidth - a.offsetWidth) / 2, behavior: "smooth" });
       });
     }, { rootMargin: "-45% 0px -50% 0px" });
     document.querySelectorAll(".category").forEach((c) => io.observe(c));
