@@ -1,0 +1,54 @@
+{
+  "profile": {
+    "name": "KR Luxury Nails",
+    "tagline": "Arte en tus manos, elegancia en cada detalle",
+    "about": "Soy especialista en uñas con pasión por los detalles. Cada diseño está hecho a mano, con productos de alta calidad y en un espacio pensado para que te relajes y te sientas consentida.",
+    "services": [
+      { "name": "Manicura clásica", "price": "$15" },
+      { "name": "Uñas acrílicas", "price": "$35" },
+      { "name": "Gel / Semipermanente", "price": "$25" },
+      { "name": "Nail art (por uña)", "price": "desde $3" },
+      { "name": "Pedicura spa", "price": "$25" }
+    ],
+    "address": "Escribe aquí la dirección de tu local",
+    "mapsQuery": "Panamá",
+    "hours": [
+      "Lunes a viernes · 9:00 – 19:00",
+      "Sábado · 9:00 – 15:00",
+      "Domingo · con cita previa"
+    ],
+    "whatsapp": "50760000000",
+    "whatsappMessage": "¡Hola! Quisiera reservar una cita 💅",
+    "instagram": "krluxurynails",
+    "phone": ""
+  },
+  "categories": [
+    {
+      "id": "cat-acrilicas",
+      "name": "Acrílicas",
+      "description": "Largo y forma a tu medida, con acabado impecable.",
+      "items": [
+        { "id": "m1", "src": "images/muestras/muestra-1.svg", "title": "Almendra nude", "price": "" },
+        { "id": "m2", "src": "images/muestras/muestra-2.svg", "title": "Francés clásico", "price": "" }
+      ]
+    },
+    {
+      "id": "cat-gel",
+      "name": "Gel & Semipermanente",
+      "description": "Brillo duradero y uñas naturales con estilo.",
+      "items": [
+        { "id": "m3", "src": "images/muestras/muestra-3.svg", "title": "Malva elegante", "price": "" },
+        { "id": "m4", "src": "images/muestras/muestra-4.svg", "title": "Coral suave", "price": "" }
+      ]
+    },
+    {
+      "id": "cat-nailart",
+      "name": "Nail Art",
+      "description": "Diseños únicos pintados a mano.",
+      "items": [
+        { "id": "m5", "src": "images/muestras/muestra-5.svg", "title": "Vino y dorado", "price": "" },
+        { "id": "m6", "src": "images/muestras/muestra-6.svg", "title": "Champagne", "price": "" }
+      ]
+    }
+  ]
+}

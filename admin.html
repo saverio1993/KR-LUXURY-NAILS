@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#4e2330">
+  <meta name="robots" content="noindex">
+  <title>Panel · KR Luxury Nails</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,500;1,600&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E💅%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+  <div class="app admin" id="app">
+
+    <!-- Inicio de sesión -->
+    <section class="login" id="loginView" hidden>
+      <div class="monogram"><span>KR</span></div>
+      <h1 class="script">Bienvenida</h1>
+      <p class="muted">Inicia sesión para administrar tu catálogo</p>
+      <form id="loginForm" class="login-card">
+        <label>Clave de acceso
+          <input type="password" id="tokenInput" placeholder="github_pat_…" autocomplete="current-password" required>
+        </label>
+        <button class="btn btn-primary" type="submit" id="loginBtn">Entrar</button>
+        <p class="error" id="loginError"></p>
+        <details class="help">
+          <summary>¿Cómo obtengo mi clave?</summary>
+          <ol>
+            <li>Entra a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → Fine-grained token</a>.</li>
+            <li>En <i>Repository access</i> elige solo <b id="repoName"></b>.</li>
+            <li>En <i>Permissions → Contents</i> elige <b>Read and write</b>.</li>
+            <li>Genera el token, cópialo y pégalo aquí. Se guarda solo en este teléfono.</li>
+          </ol>
+        </details>
+      </form>
+      <a class="back" href="./">← Volver a la web</a>
+    </section>
+
+    <!-- Panel -->
+    <section id="panelView" hidden>
+      <header class="topbar">
+        <a href="./" class="topbar-title script" title="Ver la web">KR Panel</a>
+        <div class="topbar-actions">
+          <button class="btn btn-save" id="saveBtn" disabled>Guardar</button>
+          <button class="icon-btn" id="logoutBtn" title="Cerrar sesión" aria-label="Cerrar sesión">⎋</button>
+        </div>
+      </header>
+
+      <nav class="tabs">
+        <button class="tab active" data-tab="catalog">Catálogo</button>
+        <button class="tab" data-tab="profile">Mi información</button>
+      </nav>
+
+      <div class="tab-panel" id="tab-catalog">
+        <p class="tip">Mantén presionada una foto y arrástrala para cambiarla de lugar o de categoría. Toca una foto para editarla.</p>
+        <div id="categories"></div>
+        <button class="btn btn-ghost wide" id="addCatBtn">＋ Nueva categoría</button>
+      </div>
+
+      <div class="tab-panel" id="tab-profile" hidden>
+        <form id="profileForm" class="form" autocomplete="off"></form>
+      </div>
+    </section>
+  </div>
+
+  <!-- Hoja inferior (modal) -->
+  <div class="sheet-backdrop" id="sheet" hidden>
+    <div class="sheet" role="dialog" aria-modal="true">
+      <div class="sheet-handle"></div>
+      <div id="sheetBody"></div>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" accept="image/*" multiple hidden>
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

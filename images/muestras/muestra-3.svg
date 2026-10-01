@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 750">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#efe0ea"/><stop offset="1" stop-color="#d9b3c9"/></linearGradient>
+<linearGradient id="n" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8e4e72" stop-opacity=".85"/><stop offset="1" stop-color="#8e4e72"/></linearGradient>
+</defs>
+<rect width="600" height="750" fill="url(#bg)"/>
+<g transform="translate(300 380)">
+<g transform="rotate(-14) translate(-150 0)"><path d="M-38 120 L-38 -40 C-38 -120 0 -170 0 -170 C0 -170 38 -120 38 -40 L38 120 Z" fill="url(#n)"/><path d="M-20 -40 C-20 -95 0 -130 0 -130" stroke="#fff" stroke-opacity=".45" stroke-width="9" fill="none" stroke-linecap="round"/></g>
+<g transform="translate(-50 -30)"><path d="M-40 140 L-40 -40 C-40 -125 0 -180 0 -180 C0 -180 40 -125 40 -40 L40 140 Z" fill="url(#n)"/><path d="M-21 -40 C-21 -98 0 -136 0 -136" stroke="#fff" stroke-opacity=".45" stroke-width="9" fill="none" stroke-linecap="round"/></g>
+<g transform="translate(55 -40)"><path d="M-40 150 L-40 -40 C-40 -128 0 -186 0 -186 C0 -186 40 -128 40 -40 L40 150 Z" fill="url(#n)"/><path d="M-21 -40 C-21 -100 0 -140 0 -140" stroke="#fff" stroke-opacity=".45" stroke-width="9" fill="none" stroke-linecap="round"/></g>
+<g transform="rotate(12) translate(160 0)"><path d="M-36 120 L-36 -36 C-36 -112 0 -160 0 -160 C0 -160 36 -112 36 -36 L36 120 Z" fill="url(#n)"/><path d="M-19 -36 C-19 -88 0 -122 0 -122" stroke="#fff" stroke-opacity=".45" stroke-width="8" fill="none" stroke-linecap="round"/></g>
+</g>
+<text x="300" y="690" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-size="26" fill="#8e4e72" opacity=".7">muestra · reemplazar</text>
+</svg>
