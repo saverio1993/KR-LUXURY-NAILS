@@ -14,10 +14,10 @@ module.exports = async (req, res) => {
   if (data.length < 3 || data[0] !== 0xff || data[1] !== 0xd8 || data[2] !== 0xff) {
     return res.status(400).json({ error: "La foto debe ser JPG" });
   }
-  const result = await blob.lib.put(`fotos/${name}.jpg`, data, {
+  const result = await blob.lib.put(`fotos/${name}.jpg`, data, blob.opts({
     access: "public",
     contentType: "image/jpeg",
     addRandomSuffix: true,
-  });
+  }));
   res.json({ url: result.url });
 };

@@ -100,6 +100,8 @@ async function requireAdmin(req, res) {
 const blob = {
   impl: null,
   get lib() { return this.impl || (this.impl = require("@vercel/blob")); },
+  // Siempre el almacén de BLOB_READ_WRITE_TOKEN, aunque el proyecto tenga otro conectado (BLOB_STORE_ID).
+  opts(o = {}) { return { ...o, token: process.env.BLOB_READ_WRITE_TOKEN }; },
 };
 
 module.exports = { CATALOG_BLOB, publishableKey, frontendApi, requireAdmin, blob };

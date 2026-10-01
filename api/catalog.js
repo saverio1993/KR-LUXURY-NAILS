@@ -9,7 +9,7 @@ const BLOB_HOST = /\.public\.blob\.vercel-storage\.com$/;
 
 async function readCatalog() {
   if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const found = await blob.lib.get(CATALOG_BLOB, { access: "public", useCache: false });
+    const found = await blob.lib.get(CATALOG_BLOB, blob.opts({ access: "public", useCache: false }));
     if (found) return JSON.parse(await new Response(found.stream).text());
   }
   return JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "catalog.json"), "utf8"));
@@ -40,20 +40,20 @@ module.exports = async (req, res) => {
   const { catalog, deleted } = req.body || {};
   if (!valid(catalog)) return res.status(400).json({ error: "Catálogo no válido" });
 
-  await blob.lib.put(CATALOG_BLOB, JSON.stringify(catalog, null, 2), {
+  await blob.lib.put(CATALOG_BLOB, JSON.stringify(catalog, null, 2), blob.opts({
     access: "public",
     contentType: "application/json",
     addRandomSuffix: false,
     allowOverwrite: true,
     cacheControlMaxAge: 60,
-  });
+  }));
 
   // Solo se borran fotos subidas a Blob que ya no aparecen en el catálogo.
   const inUse = new Set(catalog.categories.flatMap((c) => c.items.map((it) => it.src)));
   const toDelete = (Array.isArray(deleted) ? deleted : []).filter((u) => {
     try { return BLOB_HOST.test(new URL(u).hostname) && !inUse.has(u); } catch (_) { return false; }
   });
-  if (toDelete.length) await blob.lib.del(toDelete).catch((e) => console.error(e));
+  if (toDelete.length) await blob.lib.del(toDelete, blob.opts()).catch((e) => console.error(e));
 
   res.json({ ok: true });
 };
