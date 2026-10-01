@@ -266,7 +266,7 @@
   const getJson = (url) => fetch(url).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
   getJson("/api/catalog")
     .catch(() => getJson(window.KR_CONFIG.catalogPath + "?v=" + Date.now()))
-    .then((data) => { DATA = data; route(); })
+    .then((data) => { DATA = data; window.krApplyTheme(data.theme); route(); })
     .catch(() => {
       document.getElementById("app").innerHTML = '<div class="loading"><span class="script">Ups…</span>No se pudo cargar el catálogo.</div>';
     });

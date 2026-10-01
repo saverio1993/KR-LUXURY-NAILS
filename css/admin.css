@@ -129,3 +129,26 @@ input:focus, textarea:focus, select:focus { border-color: var(--rose); box-shado
 .profile-photo-actions .btn { padding: 8px 18px; font-size: 16px; }
 .hint-title { font-size: 15px; color: var(--muted); }
 .link-danger { color: #b3384f; font-size: 15px; padding: 0; }
+
+/* ---------- Tipo de letra ---------- */
+.font-preview {
+  text-align: center; padding: 18px 14px; margin-bottom: 14px;
+  border-radius: 18px; background: linear-gradient(180deg, #f6e3dd, var(--cream));
+  border: 1px solid var(--line);
+}
+.font-preview .fp-title { display: block; font-size: 44px; line-height: 1.15; color: var(--wine); font-style: normal; }
+.font-preview p { font-size: 18px; color: var(--mauve); margin-top: 4px; }
+.font-label { font-size: 16px; color: var(--muted); margin: 6px 0 8px; }
+.font-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.font-chip {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  padding: 10px 6px; min-height: 76px; border-radius: 14px;
+  background: #fff; border: 1.5px solid var(--line); color: var(--wine);
+  transition: border-color .2s, box-shadow .2s;
+}
+.font-chip .font-sample { font-size: 26px; line-height: 1.1; }
+.font-chip small { font-family: system-ui, sans-serif; font-style: normal; font-size: 11px; color: var(--muted); }
+.font-chip.selected { border-color: var(--mauve); box-shadow: 0 0 0 3px rgba(142, 78, 93, 0.18); background: #fff8f6; }
+.fonts .check { display: flex; align-items: center; gap: 10px; font-size: 16px; color: var(--ink); margin: 4px 0 8px; }
+.fonts .check input { width: 20px; height: 20px; margin: 0; accent-color: var(--mauve); }
+.font-chip[data-font-kind="body"] .font-sample { font-size: 20px; }

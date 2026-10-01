@@ -25,7 +25,7 @@
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body {
   font-family: var(--serif);
-  font-style: italic;
+  font-style: var(--body-style, italic);
   font-size: 19px;
   line-height: 1.5;
   color: var(--ink);

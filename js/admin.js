@@ -412,6 +412,8 @@
         <label>Sobre mí<textarea name="about">${esc(p.about)}</textarea></label>
       </fieldset>
 
+      ${fontFieldset()}
+
       <fieldset>
         <legend>Contacto</legend>
         ${field("whatsapp", "WhatsApp", 'inputmode="tel"', "Con código de país, solo números. Ej. 50761234567")}
@@ -434,6 +436,49 @@
       </fieldset>`;
   }
 
+  // Carga una sola vez todas las letras para poder mostrarlas en el panel.
+  let allFontsLoaded = false;
+  function loadAllFonts() {
+    if (allFontsLoaded) return;
+    allFontsLoaded = true;
+    const F = window.KR_FONTS;
+    const families = [...F.script, ...F.body].map((f) => "family=" + f.spec);
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://fonts.googleapis.com/css2?" + [...new Set(families)].join("&") + "&display=swap";
+    document.head.appendChild(link);
+  }
+
+  function currentTheme() {
+    return Object.assign({}, window.KR_FONTS.defaults, data.theme || {});
+  }
+
+  function fontFieldset() {
+    loadAllFonts();
+    const F = window.KR_FONTS;
+    const t = currentTheme();
+    const chips = (kind, list, selected, sample) => list.map((f) => `
+      <button type="button" class="font-chip ${f.name === selected ? "selected" : ""}" data-font-kind="${kind}" data-font="${esc(f.name)}"
+        style="font-family:'${esc(f.name)}'${kind === "body" ? `;font-style:${t.bodyItalic ? "italic" : "normal"}` : ""}">
+        <span class="font-sample">${sample}</span><small>${esc(f.name)}</small>
+      </button>`).join("");
+    const p = data.profile;
+    return `
+      <fieldset class="fonts">
+        <legend>Tipo de letra</legend>
+        <div class="font-preview" style="font-family:'${esc(t.bodyFont)}';font-style:${t.bodyItalic ? "italic" : "normal"}">
+          <span class="fp-title" style="font-family:'${esc(t.scriptFont)}'">${esc(p.name || "KR Luxury Nails")}</span>
+          <p>${esc(p.tagline || "Arte en tus manos, elegancia en cada detalle")}</p>
+        </div>
+        <p class="font-label">Letra de los títulos</p>
+        <div class="font-grid">${chips("script", F.script, t.scriptFont, "Kimberlin")}</div>
+        <p class="font-label">Letra de los textos</p>
+        <div class="font-grid">${chips("body", F.body, t.bodyFont, "Uñas con estilo")}</div>
+        <label class="check"><input type="checkbox" id="bodyItalic" ${t.bodyItalic ? "checked" : ""}> Textos en cursiva (inclinados)</label>
+        <button type="button" class="add-row" id="resetFonts">Restablecer letras originales</button>
+      </fieldset>`;
+  }
+
   function svcRow(s, i) {
     return `<div class="svc-row" data-i="${i}">
       <input data-svc="name" value="${esc(s.name)}" placeholder="Servicio">
@@ -448,6 +493,9 @@
     if (t.dataset.svc) {
       const i = +t.closest(".svc-row").dataset.i;
       p.services[i][t.dataset.svc] = t.value;
+    } else if (t.id === "bodyItalic") {
+      data.theme = { ...currentTheme(), bodyItalic: t.checked };
+      renderProfile();
     } else if (t.name === "hours") {
       p.hours = t.value.split("\n").map((l) => l.trim()).filter(Boolean);
     } else if (t.name) {
@@ -469,6 +517,22 @@
       p.services.splice(+e.target.dataset.delSvc, 1);
       renderProfile();
       setDirty();
+    }
+    const chip = e.target.closest("[data-font-kind]");
+    if (chip) {
+      const key = chip.dataset.fontKind === "script" ? "scriptFont" : "bodyFont";
+      data.theme = { ...currentTheme(), [key]: chip.dataset.font };
+      const y = window.scrollY;
+      renderProfile();
+      window.scrollTo(0, y);
+      setDirty();
+      return;
+    }
+    if (e.target.id === "resetFonts") {
+      data.theme = { ...window.KR_FONTS.defaults };
+      renderProfile();
+      setDirty();
+      return;
     }
     if (e.target.id === "pickProfilePhoto") $("#profileFileInput").click();
     if (e.target.id === "removeProfilePhoto") {
