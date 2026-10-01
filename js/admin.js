@@ -3,22 +3,20 @@
  * Los datos viven en el propio repositorio de GitHub:
  *   - data/catalog.json  → información y catálogo
  *   - images/catalog/    → fotos subidas desde el panel
- * La "clave de acceso" es un token de GitHub con permiso de escritura
- * sobre este repositorio; solo la dueña lo tiene, por eso solo ella puede editar.
+ * Se entra con la cuenta de Google. Las funciones de /api (en Vercel) comprueban
+ * que el correo sea de una administradora y guardan en GitHub con un token que
+ * vive en Vercel y nunca llega al navegador.
  */
 (function () {
   "use strict";
 
   const CFG = window.KR_CONFIG;
-  const API = `https://api.github.com/repos/${CFG.owner}/${CFG.repo}`;
-  const TOKEN_KEY = "kr_admin_token";
   const RAW = `https://raw.githubusercontent.com/${CFG.owner}/${CFG.repo}/${CFG.branch}/`;
 
   const $ = (sel) => document.querySelector(sel);
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const uid = (p) => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
-  let token = null;
   let data = null;          // catálogo en edición
   let catalogSha = null;    // versión de data/catalog.json en GitHub
   const pending = {};       // id de foto → { base64, preview } aún sin subir
@@ -53,65 +51,91 @@
     return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
   }
 
-  async function gh(path, opts = {}) {
-    const res = await fetch(API + path, {
+  async function api(url, opts = {}) {
+    const res = await fetch(url, {
       ...opts,
-      headers: {
-        Accept: "application/vnd.github+json",
-        Authorization: "Bearer " + token,
-        "X-GitHub-Api-Version": "2022-11-28",
-        ...(opts.body ? { "Content-Type": "application/json" } : {}),
-      },
+      credentials: "same-origin",
+      headers: opts.body ? { "Content-Type": "application/json" } : {},
     });
     if (!res.ok) {
-      const err = new Error("GitHub " + res.status);
+      const err = new Error("API " + res.status);
       err.status = res.status;
+      try { err.info = await res.json(); } catch (_) {}
       throw err;
     }
     return res.status === 204 ? null : res.json();
   }
-  const ref = () => "?ref=" + encodeURIComponent(CFG.branch);
+  // Lee, guarda o borra un archivo del repositorio a través de /api/gh
+  const gh = (path, opts) => api("/api/gh?p=" + encodeURIComponent(path), opts);
 
   function imgSrc(item) {
     return pending[item.id] ? pending[item.id].preview : item.src;
   }
 
   /* ---------------- sesión ---------------- */
-  async function verify(tk) {
-    token = tk;
-    const repo = await gh("");
-    if (!repo.permissions || !repo.permissions.push) {
-      const e = new Error("sin permiso");
-      e.status = 403;
-      throw e;
-    }
-  }
-
   async function loadCatalog() {
-    const file = await gh("/contents/" + CFG.catalogPath + ref());
+    const file = await gh(CFG.catalogPath);
     catalogSha = file.sha;
     data = JSON.parse(b64ToUtf8(file.content));
     data.profile = data.profile || {};
     data.categories = data.categories || [];
   }
 
-  async function login(tk) {
-    await verify(tk);
+  async function enterPanel() {
     await loadCatalog();
-    try { localStorage.setItem(TOKEN_KEY, tk); } catch (_) {}
     showPanel();
   }
 
-  function logout() {
+  // Google entrega una credencial firmada; el servidor la verifica y abre la sesión.
+  async function onGoogleCredential(resp) {
+    const err = $("#loginError");
+    err.textContent = "Verificando…";
+    try {
+      await api("/api/login", { method: "POST", body: JSON.stringify({ credential: resp.credential }) });
+      err.textContent = "";
+      await enterPanel();
+    } catch (ex) {
+      err.textContent = ex.status === 403
+        ? `La cuenta ${(ex.info && ex.info.email) || ""} no tiene permiso para administrar.`
+        : "No se pudo iniciar sesión. Inténtalo de nuevo.";
+      if (window.google) google.accounts.id.disableAutoSelect();
+    }
+  }
+
+  async function logout() {
     if (dirty && !confirm("Tienes cambios sin guardar. ¿Salir de todas formas?")) return;
-    try { localStorage.removeItem(TOKEN_KEY); } catch (_) {}
+    dirty = false;
+    try { await api("/api/logout", { method: "POST" }); } catch (_) {}
+    if (window.google) google.accounts.id.disableAutoSelect();
     location.reload();
   }
 
-  function showLogin() {
+  function waitForGoogle() {
+    return new Promise((resolve, reject) => {
+      let n = 0;
+      (function check() {
+        if (window.google && google.accounts && google.accounts.id) return resolve();
+        if (++n > 100) return reject(new Error("Google no cargó"));
+        setTimeout(check, 100);
+      })();
+    });
+  }
+
+  async function showLogin() {
     $("#panelView").hidden = true;
     $("#loginView").hidden = false;
-    $("#repoName").textContent = CFG.owner + "/" + CFG.repo;
+    const err = $("#loginError");
+    try {
+      const { googleClientId } = await api("/api/config");
+      if (!googleClientId) { err.textContent = "Falta configurar el acceso con Google (GOOGLE_CLIENT_ID)."; return; }
+      await waitForGoogle();
+      google.accounts.id.initialize({ client_id: googleClientId, callback: onGoogleCredential, auto_select: true });
+      google.accounts.id.renderButton($("#googleBtn"), {
+        theme: "outline", size: "large", shape: "pill", text: "signin_with", locale: "es", width: 280,
+      });
+    } catch (_) {
+      err.textContent = "No se pudo cargar el inicio de sesión. Revisa tu conexión.";
+    }
   }
 
   function showPanel() {
@@ -444,9 +468,9 @@
 
   /* ---------------- guardar ---------------- */
   async function putFile(path, base64, message, sha) {
-    return gh("/contents/" + path, {
+    return gh(path, {
       method: "PUT",
-      body: JSON.stringify({ message, content: base64, branch: CFG.branch, ...(sha ? { sha } : {}) }),
+      body: JSON.stringify({ message, content: base64, ...(sha ? { sha } : {}) }),
     });
   }
 
@@ -470,10 +494,10 @@
       for (const path of [...toDelete]) {
         btn.textContent = "Limpiando…";
         try {
-          const f = await gh("/contents/" + path + ref());
-          await gh("/contents/" + path, {
+          const f = await gh(path);
+          await gh(path, {
             method: "DELETE",
-            body: JSON.stringify({ message: "Eliminar foto del catálogo", sha: f.sha, branch: CFG.branch }),
+            body: JSON.stringify({ message: "Eliminar foto del catálogo", sha: f.sha }),
           });
         } catch (err) {
           if (err.status !== 404) throw err;
@@ -489,13 +513,13 @@
       } catch (err) {
         if (err.status !== 409 && err.status !== 422) throw err;
         // El archivo cambió en otro lugar: tomamos la versión nueva y guardamos encima.
-        const cur = await gh("/contents/" + CFG.catalogPath + ref());
+        const cur = await gh(CFG.catalogPath);
         catalogSha = (await putFile(CFG.catalogPath, utf8ToB64(json), "Actualizar catálogo", cur.sha)).content.sha;
       }
 
       setDirty(false);
       renderCatalog();
-      toast("¡Guardado! La web se actualiza en 1–2 minutos ✨", 4500);
+      toast("¡Guardado! La web se actualiza en un minuto ✨", 4500);
     } catch (err) {
       console.error(err);
       btn.disabled = false;
@@ -506,25 +530,6 @@
   }
 
   /* ---------------- eventos ---------------- */
-  $("#loginForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const btn = $("#loginBtn");
-    const err = $("#loginError");
-    err.textContent = "";
-    btn.disabled = true;
-    btn.textContent = "Verificando…";
-    try {
-      await login($("#tokenInput").value.trim());
-    } catch (ex) {
-      err.textContent = ex.status === 401 ? "La clave no es válida."
-        : ex.status === 403 || ex.status === 404 ? "Esta clave no tiene permiso para editar el catálogo."
-        : "No se pudo conectar. Inténtalo de nuevo.";
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Entrar";
-    }
-  });
-
   $("#saveBtn").addEventListener("click", save);
   $("#logoutBtn").addEventListener("click", logout);
   $("#addCatBtn").addEventListener("click", () => editCategory(null));
@@ -552,13 +557,10 @@
 
   /* ---------------- inicio ---------------- */
   (async function init() {
-    let saved = null;
-    try { saved = localStorage.getItem(TOKEN_KEY); } catch (_) {}
-    if (!saved) return showLogin();
     try {
-      await login(saved);
+      await api("/api/me");      // ¿ya hay una sesión abierta?
+      await enterPanel();
     } catch (_) {
-      try { localStorage.removeItem(TOKEN_KEY); } catch (_) {}
       showLogin();
     }
   })();

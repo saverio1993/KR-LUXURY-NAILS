@@ -12,28 +12,43 @@ Es una web estática (HTML, CSS y JavaScript): no hace falta instalar nada y fun
 
 - `data/catalog.json` guarda la información del negocio y el catálogo.
 - `images/catalog/` guarda las fotos que se suben desde el panel. Se reducen a 1600 px en JPG para que carguen rápido.
-- `images/muestras/` tiene las imágenes de ejemplo, que se pueden borrar desde el panel.
 
-Al pulsar **Guardar**, el panel publica los cambios en este repositorio usando la API de GitHub,
-y GitHub Pages actualiza la web en 1–2 minutos.
+Al pulsar **Guardar**, el panel envía los cambios a las funciones de `api/` en Vercel,
+que los guardan en este repositorio. Vercel vuelve a publicar la web en un minuto.
 
-## Acceso al panel
+## Acceso al panel (cuenta de Google)
 
-Para entrar al panel hace falta una clave: un *fine-grained token* de GitHub.
+La dueña entra con **"Iniciar sesión con Google"**. Solo los correos de `ADMIN_EMAILS` pueden administrar.
+La sesión dura 30 días en ese teléfono.
 
-1. Ve a https://github.com/settings/personal-access-tokens/new
-2. En *Repository access*, elige "Only select repositories" y marca `KR-LUXURY-NAILS`.
-3. En *Permissions → Repository permissions → Contents*, elige **Read and write**.
-4. Genera el token y pégalo en `admin.html`. Queda guardado solo en ese navegador.
+Variables de entorno en Vercel (Project → Settings → Environment Variables):
 
-Solo una clave con permiso de escritura sobre este repositorio puede editar, así que solo la dueña puede hacerlo.
+| Variable | Valor |
+| --- | --- |
+| `GOOGLE_CLIENT_ID` | ID de cliente OAuth de Google (tipo "Aplicación web") |
+| `ADMIN_EMAILS` | Correos autorizados, separados por comas |
+| `GITHUB_TOKEN` | Fine-grained token con permiso *Contents: Read and write* solo sobre este repositorio |
+
+Cómo crear el `GOOGLE_CLIENT_ID`:
+
+1. Ve a https://console.cloud.google.com/apis/credentials y crea un proyecto si no tienes uno.
+2. Configura la *pantalla de consentimiento de OAuth* (tipo Externo, con el nombre de la web).
+3. *Crear credenciales → ID de cliente de OAuth → Aplicación web*.
+4. En *Orígenes de JavaScript autorizados* agrega `https://kr-luxury-nails.vercel.app`.
+5. Copia el ID de cliente (termina en `.apps.googleusercontent.com`).
+
+Después de cambiar las variables hay que volver a publicar (Redeploy) en Vercel.
 
 ## Configuración
 
-`js/config.js` indica el repositorio y la rama donde el panel guarda los cambios.
-Debe ser la misma rama que publica GitHub Pages.
+`js/config.js` indica la ruta del catálogo y de las fotos. Las funciones de `api/_lib.js`
+usan el repositorio `saverio1993/KR-LUXURY-NAILS` y la rama publicada; se pueden cambiar con
+`GITHUB_OWNER`, `GITHUB_REPO` y `GITHUB_BRANCH`.
 
-## Activar GitHub Pages
+## GitHub Pages (opcional)
+
+La web pública también funciona en GitHub Pages, pero el panel de administración necesita Vercel.
+
 
 Ve a *Settings → Pages → Build and deployment*, elige *Deploy from a branch*, la rama configurada y la carpeta `/ (root)`.
 La web quedará en `https://saverio1993.github.io/KR-LUXURY-NAILS/`.

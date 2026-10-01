@@ -21,22 +21,11 @@
       <div class="monogram"><span>KR</span></div>
       <h1 class="script">Bienvenida</h1>
       <p class="muted">Inicia sesión para administrar tu catálogo</p>
-      <form id="loginForm" class="login-card">
-        <label>Clave de acceso
-          <input type="password" id="tokenInput" placeholder="github_pat_…" autocomplete="current-password" required>
-        </label>
-        <button class="btn btn-primary" type="submit" id="loginBtn">Entrar</button>
+      <div class="login-card google-card">
+        <div id="googleBtn"></div>
         <p class="error" id="loginError"></p>
-        <details class="help">
-          <summary>¿Cómo obtengo mi clave?</summary>
-          <ol>
-            <li>Entra a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → Fine-grained token</a>.</li>
-            <li>En <i>Repository access</i> elige solo <b id="repoName"></b>.</li>
-            <li>En <i>Permissions → Contents</i> elige <b>Read and write</b>.</li>
-            <li>Genera el token, cópialo y pégalo aquí. Se guarda solo en este teléfono.</li>
-          </ol>
-        </details>
-      </form>
+        <p class="help-note">Solo las cuentas autorizadas pueden administrar la web.</p>
+      </div>
       <a class="back" href="./">← Volver a la web</a>
     </section>
 
@@ -78,6 +67,7 @@
   <input type="file" id="fileInput" accept="image/*" multiple hidden>
   <div class="toast" id="toast"></div>
 
+  <script src="https://accounts.google.com/gsi/client" async></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
   <script src="js/config.js"></script>
   <script src="js/admin.js"></script>

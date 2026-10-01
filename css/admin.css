@@ -101,3 +101,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--rose); box-shado
   transition: all .3s ease;
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- Botón de Google ---------- */
+.google-card { text-align: center; }
+#googleBtn { display: flex; justify-content: center; min-height: 44px; }
+.help-note { font-size: 15px; color: var(--muted); margin-top: 6px; }
