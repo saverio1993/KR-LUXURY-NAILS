@@ -4,11 +4,26 @@
     "tagline": "Arte en tus manos, elegancia en cada detalle",
     "about": "Soy especialista en uñas con pasión por los detalles. Cada diseño está hecho a mano, con productos de alta calidad y en un espacio pensado para que te relajes y te sientas consentida.",
     "services": [
-      { "name": "Manicura clásica", "price": "$15" },
-      { "name": "Uñas acrílicas", "price": "$35" },
-      { "name": "Gel / Semipermanente", "price": "$25" },
-      { "name": "Nail art (por uña)", "price": "desde $3" },
-      { "name": "Pedicura spa", "price": "$25" }
+      {
+        "name": "Manicura clásica",
+        "price": "$15"
+      },
+      {
+        "name": "Uñas acrílicas",
+        "price": "$35"
+      },
+      {
+        "name": "Gel / Semipermanente",
+        "price": "$25"
+      },
+      {
+        "name": "Nail art (por uña)",
+        "price": "desde $3"
+      },
+      {
+        "name": "Pedicura spa",
+        "price": "$25"
+      }
     ],
     "address": "Escribe aquí la dirección de tu local",
     "mapsQuery": "Panamá",
@@ -24,30 +39,145 @@
   },
   "categories": [
     {
-      "id": "cat-acrilicas",
-      "name": "Acrílicas",
-      "description": "Largo y forma a tu medida, con acabado impecable.",
+      "id": "cat-flores",
+      "name": "Flores & Nail Art",
+      "description": "Flores en relieve y diseños pintados a mano, uña por uña.",
       "items": [
-        { "id": "m1", "src": "images/muestras/muestra-1.svg", "title": "Almendra nude", "price": "" },
-        { "id": "m2", "src": "images/muestras/muestra-2.svg", "title": "Francés clásico", "price": "" }
+        {
+          "id": "flores-mandarina",
+          "src": "images/catalog/flores-mandarina.jpg",
+          "title": "Flores mandarina",
+          "price": ""
+        },
+        {
+          "id": "flores-rosa-animal-print",
+          "src": "images/catalog/flores-rosa-animal-print.jpg",
+          "title": "Flores rosa y animal print",
+          "price": ""
+        },
+        {
+          "id": "flor-turquesa",
+          "src": "images/catalog/flor-turquesa.jpg",
+          "title": "Flor turquesa y perlas doradas",
+          "price": ""
+        },
+        {
+          "id": "flores-azul-brillo",
+          "src": "images/catalog/flores-azul-brillo.jpg",
+          "title": "Flor azul con destellos",
+          "price": ""
+        },
+        {
+          "id": "flor-rubi",
+          "src": "images/catalog/flor-rubi.jpg",
+          "title": "Flor sobre rubí",
+          "price": ""
+        },
+        {
+          "id": "flor-perla-amarillo",
+          "src": "images/catalog/flor-perla-amarillo.jpg",
+          "title": "Flor perla y francés amarillo",
+          "price": ""
+        },
+        {
+          "id": "margaritas-limon",
+          "src": "images/catalog/margaritas-limon.jpg",
+          "title": "Margaritas limón",
+          "price": ""
+        }
       ]
     },
     {
-      "id": "cat-gel",
-      "name": "Gel & Semipermanente",
-      "description": "Brillo duradero y uñas naturales con estilo.",
+      "id": "cat-dorado",
+      "name": "Toques Dorados",
+      "description": "Cromados, láminas y líneas de oro para un look de lujo.",
       "items": [
-        { "id": "m3", "src": "images/muestras/muestra-3.svg", "title": "Malva elegante", "price": "" },
-        { "id": "m4", "src": "images/muestras/muestra-4.svg", "title": "Coral suave", "price": "" }
+        {
+          "id": "oro-cromado",
+          "src": "images/catalog/oro-cromado.jpg",
+          "title": "Oro cromado",
+          "price": ""
+        },
+        {
+          "id": "lila-y-oro",
+          "src": "images/catalog/lila-y-oro.jpg",
+          "title": "Lila con marcos de oro",
+          "price": ""
+        },
+        {
+          "id": "marmol-nude-oro",
+          "src": "images/catalog/marmol-nude-oro.jpg",
+          "title": "Mármol nude y oro",
+          "price": ""
+        },
+        {
+          "id": "vino-y-oro",
+          "src": "images/catalog/vino-y-oro.jpg",
+          "title": "Vino y oro",
+          "price": ""
+        },
+        {
+          "id": "frances-hoja-de-oro",
+          "src": "images/catalog/frances-hoja-de-oro.jpg",
+          "title": "Francés con hoja de oro",
+          "price": ""
+        }
       ]
     },
     {
-      "id": "cat-nailart",
-      "name": "Nail Art",
-      "description": "Diseños únicos pintados a mano.",
+      "id": "cat-rojos",
+      "name": "Rojos Pasión",
+      "description": "El clásico que nunca falla, con un toque especial.",
       "items": [
-        { "id": "m5", "src": "images/muestras/muestra-5.svg", "title": "Vino y dorado", "price": "" },
-        { "id": "m6", "src": "images/muestras/muestra-6.svg", "title": "Champagne", "price": "" }
+        {
+          "id": "rojo-marmol",
+          "src": "images/catalog/rojo-marmol.jpg",
+          "title": "Rojo con mármol",
+          "price": ""
+        },
+        {
+          "id": "rojo-hojas-doradas",
+          "src": "images/catalog/rojo-hojas-doradas.jpg",
+          "title": "Rojo con hojas doradas",
+          "price": ""
+        },
+        {
+          "id": "frances-rojo-estrella",
+          "src": "images/catalog/frances-rojo-estrella.jpg",
+          "title": "Francés rojo y estrella",
+          "price": ""
+        },
+        {
+          "id": "frances-rojo-plumas",
+          "src": "images/catalog/frances-rojo-plumas.jpg",
+          "title": "Francés rojo con plumas",
+          "price": ""
+        }
+      ]
+    },
+    {
+      "id": "cat-romantico",
+      "name": "Francés & Romántico",
+      "description": "Delicados, femeninos y perfectos para todos los días.",
+      "items": [
+        {
+          "id": "corazones-rosa",
+          "src": "images/catalog/corazones-rosa.jpg",
+          "title": "Corazones y flores rosa",
+          "price": ""
+        },
+        {
+          "id": "cerezas",
+          "src": "images/catalog/cerezas.jpg",
+          "title": "Cerezas",
+          "price": ""
+        },
+        {
+          "id": "corazones-noir",
+          "src": "images/catalog/corazones-noir.jpg",
+          "title": "Corazones noir",
+          "price": ""
+        }
       ]
     }
   ]
