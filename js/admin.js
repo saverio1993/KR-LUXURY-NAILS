@@ -238,7 +238,9 @@
   }
 
   /* ---------------- hoja inferior ---------------- */
-  function openSheet(html, onReady) {
+  let sheetLocked = false;
+  function openSheet(html, onReady, locked = false) {
+    sheetLocked = locked;
     $("#sheetBody").innerHTML = html;
     $("#sheet").hidden = false;
     document.body.style.overflow = "hidden";
@@ -248,7 +250,7 @@
     $("#sheet").hidden = true;
     document.body.style.overflow = "";
   }
-  $("#sheet").addEventListener("click", (e) => { if (e.target.id === "sheet") closeSheet(); });
+  $("#sheet").addEventListener("click", (e) => { if (e.target.id === "sheet" && !sheetLocked) closeSheet(); });
 
   function editCategory(id) {
     const isNew = !id;
@@ -297,6 +299,7 @@
     openSheet(`
       <h2>Editar foto</h2>
       <div class="preview"><img src="${esc(imgSrc(it))}" alt=""></div>
+      <button type="button" class="btn btn-ghost crop-open" id="cropPhoto">✂︎ Encuadrar foto</button>
       <form id="photoForm">
         <label>Nombre del diseño (opcional)<input name="title" value="${esc(it.title)}" maxlength="50" placeholder="Ej. Francés con brillo"></label>
         <label>Precio (opcional)<input name="price" value="${esc(it.price)}" maxlength="20" placeholder="Ej. $30"></label>
@@ -320,6 +323,18 @@
         closeSheet();
         renderCatalog();
       };
+      root.querySelector("#cropPhoto").onclick = async () => {
+        // Guarda lo escrito antes de pasar al editor
+        it.title = form.title.value.trim();
+        it.price = form.price.value.trim();
+        const res = await openCropper(imgSrc(it), CROP.catalog, { title: "Encuadrar foto" });
+        if (res && res !== "skip") {
+          pending[id] = res;
+          setDirty();
+          renderCatalog();
+        }
+        editPhoto(id);
+      };
       root.querySelector("#delPhoto").onclick = () => {
         if (!confirm("¿Eliminar esta foto?")) return;
         removeItem(id);
@@ -327,6 +342,151 @@
         closeSheet();
         renderCatalog();
       };
+    });
+  }
+
+  /* ---------------- encuadrar fotos ---------------- */
+  // Proporciones de salida: catálogo 4:5 y foto de perfil en el corazón (100:92)
+  const CROP = {
+    catalog: { ratio: 4 / 5, outW: 1200, shape: "rect" },
+    profile: { ratio: 100 / 92, outW: 1000, shape: "heart" },
+  };
+  const HEART_PATH = "M50 88C20 68 2 50 2 28 2 12 14 2 28 2c10 0 18 6 22 14C54 8 62 2 72 2c14 0 26 10 26 26 0 22-18 40-48 60Z";
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      if (/^https?:/.test(src)) img.crossOrigin = "anonymous";
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("imagen no válida"));
+      img.src = src;
+    });
+  }
+
+  // Abre el editor: arrastrar para mover, pellizcar o usar la barra para acercar.
+  // Devuelve { preview, base64 }, "skip" (usar sin recortar) o null (cancelar / no agregar).
+  function openCropper(src, spec, opts = {}) {
+    return new Promise(async (resolve) => {
+      let img;
+      try { img = await loadImage(src); } catch (_) { toast("No se pudo abrir la imagen."); return resolve(null); }
+
+      const overlay = spec.shape === "heart"
+        ? `<svg class="crop-overlay" viewBox="0 0 100 92" preserveAspectRatio="none" aria-hidden="true">
+             <path d="M0 0H100V92H0Z ${HEART_PATH}" fill="rgba(40,14,22,.55)" fill-rule="evenodd"/>
+             <path d="${HEART_PATH}" fill="none" stroke="#e3c3a4" stroke-width=".8"/></svg>`
+        : `<div class="crop-overlay crop-grid" aria-hidden="true"></div>`;
+
+      openSheet(`
+        <h2>${esc(opts.title || "Encuadrar foto")}</h2>
+        <p class="crop-tip">Arrastra la foto para moverla y pellizca con dos dedos (o usa la barra) para acercar o alejar.</p>
+        <div class="crop-stage" style="aspect-ratio:${spec.ratio}">
+          <img class="crop-img" alt="" draggable="false">
+          ${overlay}
+        </div>
+        <div class="crop-zoom">
+          <span>－</span><input type="range" min="1" max="4" step="0.01" value="1" aria-label="Acercar o alejar"><span>＋</span>
+        </div>
+        <div class="sheet-actions">
+          <button type="button" class="btn btn-ghost" data-crop="cancel">${opts.allowSkip ? "No agregar" : "Cancelar"}</button>
+          <button type="button" class="btn btn-primary" data-crop="ok">Listo</button>
+        </div>
+        ${opts.allowSkip ? '<button type="button" class="add-row crop-skip" data-crop="skip">Usar la foto completa, sin recortar</button>' : ""}
+      `, (root) => {
+        const stage = root.querySelector(".crop-stage");
+        const view = root.querySelector(".crop-img");
+        const range = root.querySelector(".crop-zoom input");
+        view.src = img.src;
+        const W = stage.clientWidth, H = stage.clientHeight;
+        const base = Math.max(W / img.naturalWidth, H / img.naturalHeight);
+        let zoom = 1;
+        let x = (W - img.naturalWidth * base) / 2;
+        let y = (H - img.naturalHeight * base) / 2;
+
+        function clamp() {
+          const s = base * zoom;
+          const dw = img.naturalWidth * s, dh = img.naturalHeight * s;
+          x = Math.min(0, Math.max(W - dw, x));
+          y = Math.min(0, Math.max(H - dh, y));
+        }
+        function draw() {
+          const s = base * zoom;
+          view.style.width = img.naturalWidth * s + "px";
+          view.style.height = img.naturalHeight * s + "px";
+          view.style.transform = `translate(${x}px, ${y}px)`;
+        }
+        // Acercar manteniendo fijo el punto (cx, cy) de la ventana
+        function setZoom(z, cx = W / 2, cy = H / 2) {
+          z = Math.min(4, Math.max(1, z));
+          const k = z / zoom;
+          x = cx - (cx - x) * k;
+          y = cy - (cy - y) * k;
+          zoom = z;
+          range.value = z;
+          clamp();
+          draw();
+        }
+        draw();
+
+        const pts = new Map();
+        let pinch = null;
+        stage.addEventListener("pointerdown", (e) => {
+          stage.setPointerCapture(e.pointerId);
+          pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (pts.size === 2) {
+            const [a, b] = [...pts.values()];
+            pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: zoom };
+          }
+        });
+        stage.addEventListener("pointermove", (e) => {
+          const prev = pts.get(e.pointerId);
+          if (!prev) return;
+          const cur = { x: e.clientX, y: e.clientY };
+          pts.set(e.pointerId, cur);
+          if (pts.size === 2 && pinch) {
+            const [a, b] = [...pts.values()];
+            const r = stage.getBoundingClientRect();
+            setZoom(pinch.z * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d, (a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top);
+          } else if (pts.size === 1) {
+            x += cur.x - prev.x;
+            y += cur.y - prev.y;
+            clamp();
+            draw();
+          }
+        });
+        const up = (e) => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; };
+        stage.addEventListener("pointerup", up);
+        stage.addEventListener("pointercancel", up);
+        stage.addEventListener("wheel", (e) => {
+          e.preventDefault();
+          const r = stage.getBoundingClientRect();
+          setZoom(zoom * (e.deltaY < 0 ? 1.08 : 1 / 1.08), e.clientX - r.left, e.clientY - r.top);
+        }, { passive: false });
+        range.addEventListener("input", () => setZoom(+range.value));
+
+        root.querySelectorAll("[data-crop]").forEach((b) => b.addEventListener("click", () => {
+          const action = b.dataset.crop;
+          if (action !== "ok") { closeSheet(); return resolve(action === "skip" ? "skip" : null); }
+          const s = base * zoom;
+          const sx = -x / s, sy = -y / s, sw = W / s, sh = H / s;
+          const outW = Math.round(Math.min(spec.outW, Math.max(spec.outW * 0.75, sw)));
+          const outH = Math.round(outW / spec.ratio);
+          const canvas = document.createElement("canvas");
+          canvas.width = outW;
+          canvas.height = outH;
+          const ctx = canvas.getContext("2d");
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, outW, outH);
+          ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
+          let dataUrl;
+          try { dataUrl = canvas.toDataURL("image/jpeg", 0.86); } catch (_) {
+            toast("No se pudo editar esta foto. Vuelve a subirla desde el teléfono.");
+            closeSheet();
+            return resolve(null);
+          }
+          closeSheet();
+          resolve({ preview: dataUrl, base64: dataUrl.split(",")[1] });
+        }));
+      }, true);
     });
   }
 
@@ -364,15 +524,24 @@
     e.target.value = "";
     const cat = data.categories.find((c) => c.id === uploadTarget);
     if (!cat || !files.length) return;
-    toast(`Preparando ${files.length} foto(s)…`);
     let ok = 0;
-    for (const file of files) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const url = URL.createObjectURL(file);
       try {
+        const title = files.length > 1 ? `Foto ${i + 1} de ${files.length}` : "Encuadrar foto";
+        let res = await openCropper(url, CROP.catalog, { title, allowSkip: true });
+        if (!res) continue;
+        if (res === "skip") res = await compress(file);
         const id = uid("p");
-        pending[id] = await compress(file);
+        pending[id] = res;
         cat.items.push({ id, src: `${CFG.imagesDir}/${id}.jpg`, title: "", price: "" });
         ok++;
-      } catch (_) { /* se ignora el archivo que no es imagen */ }
+      } catch (_) {
+        /* se ignora el archivo que no es imagen */
+      } finally {
+        URL.revokeObjectURL(url);
+      }
     }
     if (ok) {
       setDirty();
@@ -403,7 +572,7 @@
           <div class="profile-photo-actions">
             <span class="hint-title">Tu foto para "Sobre mí"</span>
             <button type="button" class="btn btn-ghost" id="pickProfilePhoto">${p.photo || profilePhotoPending ? "Cambiar foto" : "Subir foto"}</button>
-            ${p.photo || profilePhotoPending ? '<button type="button" class="link-danger" id="removeProfilePhoto">Quitar foto</button>' : ""}
+            ${p.photo || profilePhotoPending ? '<button type="button" class="add-row" id="cropProfilePhoto">✂︎ Encuadrar</button><button type="button" class="link-danger" id="removeProfilePhoto">Quitar foto</button>' : ""}
           </div>
         </div>
         ${field("stylistName", "Tu nombre (opcional)", 'placeholder="Ej. Kimberlin"', "Se muestra debajo de tu foto")}
@@ -535,6 +704,13 @@
       return;
     }
     if (e.target.id === "pickProfilePhoto") $("#profileFileInput").click();
+    if (e.target.id === "cropProfilePhoto") {
+      const src = profilePhotoPending ? profilePhotoPending.preview : p.photo;
+      openCropper(src, CROP.profile, { title: "Encuadrar tu foto" }).then((res) => {
+        if (res && res !== "skip") { profilePhotoPending = res; setDirty(); }
+        renderProfile();
+      });
+    }
     if (e.target.id === "removeProfilePhoto") {
       if (/^https:\/\//.test(p.photo || "")) deletedUrls.add(p.photo);
       p.photo = "";
@@ -548,13 +724,18 @@
     const file = e.target.files[0];
     e.target.value = "";
     if (!file) return;
+    const url = URL.createObjectURL(file);
     try {
-      profilePhotoPending = await compress(file);
+      const res = await openCropper(url, CROP.profile, { title: "Encuadrar tu foto", allowSkip: true });
+      if (!res) return;
+      profilePhotoPending = res === "skip" ? await compress(file) : res;
       renderProfile();
       setDirty();
       toast("Foto lista. No olvides Guardar.");
     } catch (_) {
       toast("No se pudo leer la imagen.");
+    } finally {
+      URL.revokeObjectURL(url);
     }
   });
 
@@ -571,7 +752,9 @@
         const id = uploads[i];
         btn.textContent = `Subiendo ${i + 1}/${uploads.length}…`;
         const { url } = await api("/api/upload", { method: "POST", body: JSON.stringify({ name: id, base64: pending[id].base64 }) });
-        findItem(id).item.src = url;
+        const item = findItem(id).item;
+        if (/^https:\/\//.test(item.src)) deletedUrls.add(item.src);
+        item.src = url;
         delete pending[id];
       }
 
