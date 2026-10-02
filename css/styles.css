@@ -261,29 +261,23 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 .loading { padding: 120px 20px; text-align: center; color: var(--muted); }
 .loading .script { font-size: 44px; color: var(--wine); display: block; }
 
-/* ---------- Sobre mí: foto de la estilista (marco de corazón) ---------- */
-:root { --heart: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 92'%3E%3Cpath d='M50%2088C20%2068%202%2050%202%2028%202%2012%2014%202%2028%202c10%200%2018%206%2022%2014C54%208%2062%202%2072%202c14%200%2026%2010%2026%2026%200%2022-18%2040-48%2060Z'/%3E%3C/svg%3E"); }
+/* ---------- Sobre mí: foto de la estilista (cuadrada y centrada) ---------- */
 .about-photo {
-  position: relative;
-  width: 250px; aspect-ratio: 100 / 92;
-  margin: 26px auto 0;
-  filter: drop-shadow(0 14px 22px rgba(78, 35, 48, 0.28));
-}
-/* borde dorado: un corazón dorado detrás y la foto en un corazón un poco más pequeño */
-.about-photo::before {
-  content: ""; position: absolute; inset: 0;
+  width: 240px; aspect-ratio: 1 / 1;
+  margin: 24px auto 0;
+  padding: 5px;
+  border-radius: 6px;
   background: var(--gold);
-  -webkit-mask: var(--heart) center / 100% 100% no-repeat; mask: var(--heart) center / 100% 100% no-repeat;
+  box-shadow: var(--shadow);
 }
 .about-photo img, .about-photo-empty {
-  position: absolute; inset: 6px 6px 8px;
-  width: calc(100% - 12px); height: calc(100% - 14px);
-  object-fit: cover; object-position: 58% 38%;
-  display: block;
-  -webkit-mask: var(--heart) center / 100% 100% no-repeat; mask: var(--heart) center / 100% 100% no-repeat;
+  width: 100%; height: 100%;
+  display: block; object-fit: cover; object-position: 50% 30%;
+  border-radius: 3px;
+  background: var(--blush);
 }
 .about-photo-empty {
-  display: grid; place-items: center; padding-bottom: 18px;
+  display: grid; place-items: center;
   font-family: var(--script); font-style: normal; font-size: 64px; color: var(--rose);
   background: linear-gradient(160deg, #f8ebe6, #ecd3c9);
 }

@@ -346,10 +346,10 @@
   }
 
   /* ---------------- encuadrar fotos ---------------- */
-  // Proporciones de salida: catálogo 4:5 y foto de perfil en el corazón (100:92)
+  // Proporciones de salida: catálogo 4:5 y foto de perfil cuadrada
   const CROP = {
     catalog: { ratio: 4 / 5, outW: 1200, shape: "rect" },
-    profile: { ratio: 100 / 92, outW: 1000, shape: "heart" },
+    profile: { ratio: 1, outW: 1000, shape: "rect" },
   };
   const HEART_PATH = "M50 88C20 68 2 50 2 28 2 12 14 2 28 2c10 0 18 6 22 14C54 8 62 2 72 2c14 0 26 10 26 26 0 22-18 40-48 60Z";
 
@@ -571,7 +571,7 @@
             <span class="profile-photo-badge" aria-hidden="true">📷</span>
           </button>
           <div class="profile-photo-actions">
-            <span class="hint-title">Tu foto para "Sobre mí"<br><small>Toca el corazón para cambiarla</small></span>
+            <span class="hint-title">Tu foto para "Sobre mí"<br><small>Toca la foto para cambiarla</small></span>
             <button type="button" class="btn btn-ghost" id="pickProfilePhoto">${p.photo || profilePhotoPending ? "Cambiar foto" : "Subir foto"}</button>
             ${p.photo || profilePhotoPending ? '<button type="button" class="add-row" id="cropProfilePhoto">✂︎ Encuadrar</button><button type="button" class="link-danger" id="removeProfilePhoto">Quitar foto</button>' : ""}
           </div>

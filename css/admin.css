@@ -112,18 +112,13 @@ input:focus, textarea:focus, select:focus { border-color: var(--rose); box-shado
 /* ---------- Foto de la estilista ---------- */
 .profile-photo { display: flex; gap: 16px; align-items: center; margin: 4px 0 18px; }
 .profile-photo-frame {
-  position: relative; flex: none; width: 104px; aspect-ratio: 100 / 92;
-  filter: drop-shadow(0 6px 10px rgba(78, 35, 48, 0.25));
-}
-.profile-photo-frame::before {
-  content: ""; position: absolute; inset: 0; background: var(--gold);
-  -webkit-mask: var(--heart) center / 100% 100% no-repeat; mask: var(--heart) center / 100% 100% no-repeat;
+  position: relative; flex: none; width: 96px; aspect-ratio: 1 / 1;
+  padding: 3px; border-radius: 5px; background: var(--gold);
+  box-shadow: 0 6px 12px -6px rgba(78, 35, 48, 0.4);
 }
 .profile-photo-frame img, .profile-photo-frame span:not(.profile-photo-badge) {
-  position: absolute; inset: 3px 3px 4px; width: calc(100% - 6px); height: calc(100% - 7px);
-  display: grid; place-items: center; padding-bottom: 8px; object-fit: cover; object-position: 58% 38%;
-  background: var(--blush); color: var(--muted); font-size: 13px;
-  -webkit-mask: var(--heart) center / 100% 100% no-repeat; mask: var(--heart) center / 100% 100% no-repeat;
+  width: 100%; height: 100%; display: grid; place-items: center; object-fit: cover; object-position: 50% 30%;
+  border-radius: 3px; background: var(--blush); color: var(--muted); font-size: 13px; text-align: center;
 }
 .profile-photo-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
 .profile-photo-actions .btn { padding: 8px 18px; font-size: 16px; }
@@ -180,9 +175,9 @@ input:focus, textarea:focus, select:focus { border-color: var(--rose); box-shado
 .profile-photo-actions .add-row { margin: 0; font-size: 15px; padding: 0; }
 
 /* El corazón de la foto de perfil se puede tocar para cambiarla */
-button.profile-photo-frame { padding: 0; cursor: pointer; }
+button.profile-photo-frame { padding: 3px; cursor: pointer; }
 .profile-photo-badge {
-  position: absolute; right: -2px; bottom: 4px; z-index: 2;
+  position: absolute; right: -8px; bottom: -8px; z-index: 2;
   width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
   background: var(--wine); color: #fff; font-size: 14px; font-style: normal;
   box-shadow: 0 4px 10px -4px rgba(0,0,0,.5);
