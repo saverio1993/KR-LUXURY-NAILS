@@ -564,13 +564,14 @@
       <fieldset>
         <legend>Tu marca</legend>
         <div class="profile-photo">
-          <div class="profile-photo-frame">
+          <button type="button" class="profile-photo-frame" id="pickProfileHeart" aria-label="Cambiar tu foto">
             ${profilePhotoPending || p.photo
               ? `<img src="${esc(profilePhotoPending ? profilePhotoPending.preview : p.photo)}" alt="">`
-              : '<span>Sin foto</span>'}
-          </div>
+              : '<span>Toca para<br>subir foto</span>'}
+            <span class="profile-photo-badge" aria-hidden="true">📷</span>
+          </button>
           <div class="profile-photo-actions">
-            <span class="hint-title">Tu foto para "Sobre mí"</span>
+            <span class="hint-title">Tu foto para "Sobre mí"<br><small>Toca el corazón para cambiarla</small></span>
             <button type="button" class="btn btn-ghost" id="pickProfilePhoto">${p.photo || profilePhotoPending ? "Cambiar foto" : "Subir foto"}</button>
             ${p.photo || profilePhotoPending ? '<button type="button" class="add-row" id="cropProfilePhoto">✂︎ Encuadrar</button><button type="button" class="link-danger" id="removeProfilePhoto">Quitar foto</button>' : ""}
           </div>
@@ -703,7 +704,7 @@
       setDirty();
       return;
     }
-    if (e.target.id === "pickProfilePhoto") $("#profileFileInput").click();
+    if (e.target.id === "pickProfilePhoto" || e.target.closest("#pickProfileHeart")) $("#profileFileInput").click();
     if (e.target.id === "cropProfilePhoto") {
       const src = profilePhotoPending ? profilePhotoPending.preview : p.photo;
       openCropper(src, CROP.profile, { title: "Encuadrar tu foto" }).then((res) => {
