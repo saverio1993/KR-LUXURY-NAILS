@@ -312,3 +312,9 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 .back-home { color: #f3d9cf; text-decoration: none; font-size: 18px; }
 .catalog-page { padding-top: 18px; }
 .catalog-page .category:first-of-type { padding-top: 12px; }
+
+/* ---------- Logo ---------- */
+.hero .logo { margin: 0 auto; width: min(78%, 300px); }
+.hero .logo img { width: 100%; height: auto; }
+.hero .tagline { margin-top: 14px; }
+.footer-logo { width: 120px; height: auto; margin: 0 auto 10px; opacity: .95; }

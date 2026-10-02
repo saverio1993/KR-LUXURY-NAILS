@@ -55,8 +55,7 @@
 
     return `
       <header class="hero">
-        <div class="monogram"><span>${esc(initials(p.name))}</span></div>
-        <h1>${esc(p.name)}</h1>
+        <h1 class="logo"><img src="images/logo.png" alt="${esc(p.name)}" width="558" height="642"></h1>
         <p class="tagline">${esc(p.tagline)}</p>
         <div class="hero-actions">
           ${wa ? `<a class="btn btn-primary" href="${wa}" target="_blank" rel="noopener">${ICONS.whatsapp} Reservar cita</a>` : ""}
@@ -150,7 +149,7 @@
   function footer(p) {
     return `
       <footer class="footer">
-        <span class="script">${esc(p.name)}</span>
+        <img class="footer-logo" src="images/logo.png" alt="${esc(p.name)}" loading="lazy">
         © ${new Date().getFullYear()} · Hecho con amor
         <br><a class="admin-link" href="admin.html">✦ Administrar</a>
       </footer>`;
